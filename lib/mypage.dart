@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'dart:io';
 
 class MyPage extends StatefulWidget {
@@ -10,51 +8,93 @@ class MyPage extends StatefulWidget {
 
 class _MyPageState extends State<MyPage> {
   File? _image;
+  bool _isEditingName = false;
+  String _name = '홍길동';
+  TextEditingController _nameController = TextEditingController();
 
+  @override
+  void initState() {
+    super.initState();
+    _nameController.text = _name;
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('내 정보'),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+    return SafeArea( // SafeArea를 추가하여 시스템 UI와 겹치지 않도록 설정
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('내 정보'),
+          backgroundColor: Colors.blue,
+        ),
+        body: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
-            Stack(
-              children: [
-                // 프로필 사진
-                CircleAvatar(
-                  radius: 60,
-                  backgroundImage: _image != null ? FileImage(_image!) : null,
-                  backgroundColor: Colors.grey[200],
-                  child: _image == null
-                      ? Icon(Icons.person, size: 60, color: Colors.grey[600])
-                      : null,
-                ),
-                // + 버튼을 오른쪽 하단에 위치시키기
-                Positioned(
-                  right: 0,
-                  bottom: 0,
-                  child: GestureDetector(
-                    child: CircleAvatar(
-                      radius: 18,
-                      backgroundColor: Colors.blue,
-                      child: Icon(Icons.add, color: Colors.white, size: 20),
+            SizedBox(height: 40),
+            Center(
+              child: Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 60,
+                    backgroundImage: _image != null ? FileImage(_image!) : null,
+                    backgroundColor: Colors.grey[200],
+                    child: _image == null
+                        ? Icon(Icons.person, size: 60, color: Colors.grey[600])
+                        : null,
+                  ),
+                  Positioned(
+                    right: 0,
+                    bottom: 0,
+                    child: GestureDetector(
+                      onTap: () {
+                        // 이미지 선택을 위한 기능 추가 가능
+                      },
+                      child: CircleAvatar(
+                        radius: 18,
+                        backgroundColor: Colors.blue,
+                        child: Icon(Icons.add, color: Colors.white, size: 20),
+                      ),
                     ),
                   ),
+                ],
+              ),
+            ),
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _isEditingName
+                    ? Container(
+                  width: 200,
+                  child: TextField(
+                    controller: _nameController,
+                    onSubmitted: (newName) {
+                      setState(() {
+                        _name = newName;
+                        _isEditingName = false;
+                      });
+                    },
+                    decoration: InputDecoration(
+                      hintText: '이름을 입력하세요',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                )
+                    : Text(
+                  _name,
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.edit),
+                  onPressed: () {
+                    setState(() {
+                      _isEditingName = true;
+                    });
+                  },
                 ),
               ],
-            ),
-            SizedBox(height: 20), // 프로필 사진과 텍스트 사이의 간격
-            // 사용자 이름 또는 정보
-            Text(
-              '홍길동',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
             ),
           ],
         ),
@@ -62,3 +102,9 @@ class _MyPageState extends State<MyPage> {
     );
   }
 }
+/*
+void main() {
+  runApp(MaterialApp(
+    home: MyPage(),
+  ));
+}*/
