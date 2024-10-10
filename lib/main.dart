@@ -1,9 +1,11 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'mypage.dart';  // MyPage를 import
+import 'package:mobile/MyPage.dart';
+import 'package:mobile/Profile.dart';
 
+import 'package:permission_handler/permission_handler.dart';
+import 'dart:io';
 void main() {
   runApp(MyApp());
 }
@@ -78,7 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
     CalendarScreen(),
     MemoScreen(),
     GroupScreen(),
-    MyPage(),  // 내 정보 페이지로 MyPage 사용
+    RegistProfile(),  // 내 정보 페이지로 MyPage 사용
   ];
 
   // 탭을 클릭했을 때 호출되는 메서드
