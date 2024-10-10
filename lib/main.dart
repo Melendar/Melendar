@@ -1,5 +1,4 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:mobile/MyPage.dart';
 import 'package:mobile/Profile.dart';
@@ -93,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
+      //appBar: AppBar(),
       body: _screens[_currentIndex], // 현재 선택된 화면을 표시
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed, // 4개 이상의 탭을 사용하기 위해 fixed로 설정
