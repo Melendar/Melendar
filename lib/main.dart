@@ -1,10 +1,6 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
-import 'package:mobile/MyPage.dart';
-import 'package:mobile/Profile.dart';
-
 import 'package:permission_handler/permission_handler.dart';
-import 'dart:io';
 void main() {
   runApp(MyApp());
 }
@@ -51,27 +47,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _checkAndRequestPermission() async {
     var status = await Permission.photos.status;
 
-  /*  if (status.isGranted) {
-      // 권한이 이미 허용된 경우
-      print('갤러리 접근 권한이 이미 허용되었습니다.');
-    } else if (status.isDenied || status.isRestricted || status.isLimited) {
-      // 권한이 없거나 제한된 경우 권한 요청
-      status = await Permission.photos.request();
-      if (status.isGranted) {
-        print('갤러리 접근 권한이 허용되었습니다.');
-      } else {
-        print('갤러리 접근 권한이 거부되었습니다.');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('갤러리 접근 권한이 필요합니다.')),
-        );
-      }
-    } else if (status.isPermanentlyDenied) {
-      // 권한이 영구적으로 거부된 경우
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('갤러리 접근 권한을 설정에서 허용해주세요.')),
-      );
-      openAppSettings();  // 설정 화면으로 이동
-    }*/
   }
 
   // 각 탭에 해당하는 화면
@@ -82,7 +57,6 @@ class _HomeScreenState extends State<HomeScreen> {
     RegistProfile(),  // 내 정보 페이지로 MyPage 사용
   ];
 
-  // 탭을 클릭했을 때 호출되는 메서드
   void _onTabTapped(int index) {
     setState(() {
       _currentIndex = index;
