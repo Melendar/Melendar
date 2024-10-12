@@ -1,7 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'dart:io';
-import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 class RegistProfile extends StatefulWidget {
@@ -107,13 +105,7 @@ class Profile extends State<RegistProfile> {
           Row(*/
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-            /*  TextButton.icon(
-                icon: Icon(Icons.camera, size: 50),
-                onPressed: () {
-                  takePhoto(ImageSource.camera);
-                },
-                label: Text('Camera', style: TextStyle(fontSize: 20)),
-              ),*/
+
               TextButton.icon(
                 icon: Icon(Icons.photo_library, size: 50),
                 onPressed: () {
@@ -123,8 +115,7 @@ class Profile extends State<RegistProfile> {
               ),
             ],
           ),
-    /*    ],
-      ),*/
+
     );
   }
 
