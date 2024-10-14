@@ -8,7 +8,8 @@ class Note extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Memo List'),
+          title: const Text('메모'),
+          backgroundColor: Colors.green[100]
       ),
       body: const Center(
         child: Text('No Memos Yet!', style: TextStyle(fontSize: 24)),

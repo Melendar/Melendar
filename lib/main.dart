@@ -13,7 +13,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Memo App',
+      title: 'melender',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
@@ -34,19 +34,15 @@ class _GoogleBottomBarState extends State<GoogleBottomBar> {
 
   // 각 네비게이션 탭에 연결된 페이지
   final List<Widget> _pages = [
-    const Center(child: Text('ㄴㄴ Screen', style: TextStyle(fontSize: 24))),
+    const Center(child: Text('calender', style: TextStyle(fontSize: 20))),
     const Note(),        // 메모 화면
-    const Center(child: Text('Search Screen', style: TextStyle(fontSize: 24))),
+    const Center(child: Text('공 유', style: TextStyle(fontSize: 20))),
     RegistProfile(),     // 프로필 페이지
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Google Bottom Bar'),
-        backgroundColor: _navBarItems[_selectedIndex].selectedColor,
-      ),
       body: _pages[_selectedIndex], // 선택된 페이지 표시
       bottomNavigationBar: SalomonBottomBar(
         currentIndex: _selectedIndex,
@@ -64,23 +60,23 @@ class _GoogleBottomBarState extends State<GoogleBottomBar> {
 // SalomonBottomBar 아이템 정의
 final _navBarItems = [
   SalomonBottomBarItem(
-    icon: const Icon(Icons.home),
-    title: const Text("Home"),
+    icon: const Icon(Icons.calendar_today_outlined),
+    title: const Text("캘린더"),
     selectedColor: Colors.purple,
   ),
   SalomonBottomBarItem(
     icon: const Icon(Icons.note),
-    title: const Text("Memo"),
+    title: const Text("메모"),
     selectedColor: Colors.pink,
   ),
   SalomonBottomBarItem(
-    icon: const Icon(Icons.search),
-    title: const Text("Search"),
+    icon: const Icon(Icons.group_outlined),
+    title: const Text("그룹"),
     selectedColor: Colors.orange,
   ),
   SalomonBottomBarItem(
     icon: const Icon(Icons.person),
-    title: const Text("Profile"),
+    title: const Text("내 정보"),
     selectedColor: Colors.teal,
   ),
 ];

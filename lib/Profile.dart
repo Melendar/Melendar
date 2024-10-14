@@ -11,25 +11,30 @@ class Profile extends State<RegistProfile> {
   XFile? _imageFile; // 카메라/갤러리에서 사진 가져올 때 사용함 (image_picker)
   final ImagePicker _picker = ImagePicker();
 
-  static const Color secondaryTextColor = Colors.blue; // 또는 다른 색상으로 설정
+  static const Color secondaryTextColor = Colors.blue;
   static const Color primaryTextColor = Colors.black;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-
+      appBar: AppBar(
+        title: const Text('내 정보'),
+        backgroundColor: Colors.green[100]
+      ),
       body: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
-        child: ListView(
+        padding: const EdgeInsets.symmetric(vertical: 50, horizontal: 30),
+        child: ListView(  //아래서 만든 위젯을 나열하는 순서
           children: <Widget>[
             imageProfile(),
-            SizedBox(height: 20),
+            SizedBox(height: 30),
             nameTextField(),
             SizedBox(height: 20),
           ],
         ),
       ),
     );
-  }Widget imageProfile() {
+  }
+
+  Widget imageProfile() { //프로필 이미지
     return Center(
       child: Stack(
         children: <Widget>[
@@ -49,7 +54,7 @@ class Profile extends State<RegistProfile> {
                     context: context, builder: ((builder) => bottomSheet()));
               },
               child: Icon(
-                Icons.add,  // 연필 아이콘 사용
+                Icons.add_a_photo_outlined,
                 color: secondaryTextColor,
                 size: 30,  // 크기 조정 가능
               ),
@@ -62,7 +67,7 @@ class Profile extends State<RegistProfile> {
 
 
 
-  Widget nameTextField() {
+  Widget nameTextField() {  //네임 필드 위젯
     return TextFormField(
       decoration: InputDecoration(
         border: OutlineInputBorder(
@@ -86,29 +91,19 @@ class Profile extends State<RegistProfile> {
     );
   }
 
-  Widget bottomSheet() {
+  Widget bottomSheet() {  //프로필 변경 위젯 이미지 변경 연결
     return Container(
       height: 100,
       width: MediaQuery.of(context).size.width,
       margin: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       child: Column(
-    /*    children: <Widget>[
-          Text(
-            'Choose Profile photo',
-            style: TextStyle(
-              fontSize: 20,
-            ),
-          ),
-          SizedBox(height: 20),
-          Row(*/
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              TextButton.icon(
-                icon: Icon(Icons.photo_library, size: 50),
+              IconButton(
+                icon: Icon(Icons.photo_outlined, size: 50),
                 onPressed: () {
                  takePhoto(ImageSource.gallery);
                 },
-                label: Text('Gallery', style: TextStyle(fontSize: 20)),
               ),
             ],
           ),
