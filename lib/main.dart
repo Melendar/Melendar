@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
+import 'package:intl/date_symbol_data_local.dart';
+import 'calendar/calendar.dart';
 import 'note/Note.dart'; // 메모 화면 import
 import 'Profile.dart'; // 프로필 페이지 import
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('ko', ''); // 날짜 형식 초기화
   runApp(const MyApp());
 }
 
@@ -34,7 +38,7 @@ class _GoogleBottomBarState extends State<GoogleBottomBar> {
 
   // 각 네비게이션 탭에 연결된 페이지
   final List<Widget> _pages = [
-    const Center(child: Text('calender', style: TextStyle(fontSize: 20))),
+    const Calendar(),
     const Note(), // 메모 화면
     const Center(child: Text('공 유', style: TextStyle(fontSize: 20))),
     RegistProfile(), // 프로필 페이지
