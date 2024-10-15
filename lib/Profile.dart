@@ -13,16 +13,18 @@ class Profile extends State<RegistProfile> {
 
   static const Color secondaryTextColor = Colors.blue;
   static const Color primaryTextColor = Colors.black;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('내 정보'),
-        backgroundColor: Colors.green[100]
-      ),
+      appBar:
+          AppBar(title: const Text
+            ('내 정보'), backgroundColor: Colors.green[100]),
+
       body: Padding(
         padding: const EdgeInsets.symmetric(vertical: 50, horizontal: 30),
-        child: ListView(  //아래서 만든 위젯을 나열하는 순서
+        child: ListView(
+          //아래서 만든 위젯을 나열하는 순서
           children: <Widget>[
             imageProfile(),
             SizedBox(height: 30),
@@ -34,7 +36,8 @@ class Profile extends State<RegistProfile> {
     );
   }
 
-  Widget imageProfile() { //프로필 이미지
+  Widget imageProfile() {
+    //프로필 이미지
     return Center(
       child: Stack(
         children: <Widget>[
@@ -56,7 +59,7 @@ class Profile extends State<RegistProfile> {
               child: Icon(
                 Icons.add_a_photo_outlined,
                 color: secondaryTextColor,
-                size: 30,  // 크기 조정 가능
+                size: 30, // 크기 조정 가능
               ),
             ),
           ),
@@ -65,9 +68,8 @@ class Profile extends State<RegistProfile> {
     );
   }
 
-
-
-  Widget nameTextField() {  //네임 필드 위젯
+  Widget nameTextField() {
+    //네임 필드 위젯
     return TextFormField(
       decoration: InputDecoration(
         border: OutlineInputBorder(
@@ -85,28 +87,28 @@ class Profile extends State<RegistProfile> {
           Icons.person,
           color: primaryTextColor,
         ),
-        labelText: 'Name',
-        hintText: 'Input your name',
+        labelText: '이름을 입력하세요',
       ),
     );
   }
 
-  Widget bottomSheet() {  //프로필 변경 위젯 이미지 변경 연결
+  Widget bottomSheet() {
+    //프로필 변경 위젯 이미지 변경 연결
     return Container(
-      height: 100,
+      height: 150,
       width: MediaQuery.of(context).size.width,
       margin: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              IconButton(
-                icon: Icon(Icons.photo_outlined, size: 50),
-                onPressed: () {
-                 takePhoto(ImageSource.gallery);
-                },
-              ),
-            ],
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          IconButton(
+            icon: Icon(Icons.photo_outlined, size: 50),
+            onPressed: () {
+              takePhoto(ImageSource.gallery);
+            },
           ),
+        ],
+      ),
     );
   }
 

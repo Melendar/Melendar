@@ -15,7 +15,7 @@ class _MemoEditScreenState extends State<MemoEditScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('메모'),
-          backgroundColor: Colors.green[100],
+        backgroundColor: Colors.green[100],
         actions: [
           TextButton(
             onPressed: () {
@@ -46,10 +46,14 @@ class _MemoEditScreenState extends State<MemoEditScreen> {
             contentPadding: const EdgeInsets.all(16.0), // 내부 패딩
             alignLabelWithHint: true,
           ),
-          style: const TextStyle(fontSize: 18), // 글자 크기 조정
-          keyboardType: TextInputType.multiline, // 여러 줄 입력 가능
-          maxLines: null, // 줄바꿈 가능
-          expands: true, // 남은 공간 채우기
+          style: const TextStyle(fontSize: 18),
+          // 글자 크기 조정
+          keyboardType: TextInputType.multiline,
+          // 여러 줄 입력 가능
+          maxLines: null,
+          // 줄바꿈 가능
+          expands: true,
+          // 남은 공간 채우기
           textAlignVertical: TextAlignVertical.top, // 텍스트를 상단에 정렬
         ),
       ),

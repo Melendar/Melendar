@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
-import 'note/Note.dart';  // 메모 화면 import
-import 'Profile.dart';  // 프로필 페이지 import
+import 'note/Note.dart'; // 메모 화면 import
+import 'Profile.dart'; // 프로필 페이지 import
 
 void main() {
   runApp(const MyApp());
@@ -35,9 +35,9 @@ class _GoogleBottomBarState extends State<GoogleBottomBar> {
   // 각 네비게이션 탭에 연결된 페이지
   final List<Widget> _pages = [
     const Center(child: Text('calender', style: TextStyle(fontSize: 20))),
-    const Note(),        // 메모 화면
+    const Note(), // 메모 화면
     const Center(child: Text('공 유', style: TextStyle(fontSize: 20))),
-    RegistProfile(),     // 프로필 페이지
+    RegistProfile(), // 프로필 페이지
   ];
 
   @override
