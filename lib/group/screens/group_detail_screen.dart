@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/group_model.dart';
+import 'group_management_screen.dart'; // 그룹 관리 화면 import
 
 class GroupDetailScreen extends StatefulWidget {
   final Group group;
@@ -34,11 +35,23 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
+          IconButton(
+            icon: Icon(Icons.person_add),
+            onPressed: () {
+              showAddMemberPopup(context); // 멤버 추가 팝업 호출
+            },
+          ),
           if (widget.group.isAdmin)
             IconButton(
-              icon: Icon(Icons.person_add),
+              icon: Icon(Icons.settings), // 환경설정 아이콘
               onPressed: () {
-                showAddMemberPopup(context); // 멤버 추가 팝업 호출
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        GroupManagementScreen(group: widget.group),
+                  ),
+                );
               },
             ),
           IconButton(
@@ -186,14 +199,12 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
         builder: (BuildContext context) {
           return AlertDialog(
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10), // Rounded Box 적용
-              ),
+                  borderRadius: BorderRadius.circular(10)),
               title:
                   Text(isAdmin ? '당신은 관리자입니다. 그룹에서 나가시겠습니까?' : '그룹에서 나가시겠습니까?'),
-              actionsAlignment: MainAxisAlignment.center, // 버튼들을 중앙 정렬 (이미지처럼)
-              actionsPadding:
-                  EdgeInsets.symmetric(horizontal: 8), // 버튼 사이 간격 조정
+              actionsAlignment: MainAxisAlignment.center, // 버튼 중앙 정렬
 
+              actionsPadding: EdgeInsets.symmetric(horizontal: 8),
               actions: [
                 OutlinedButton(
                     onPressed: () => Navigator.of(context).pop(),
