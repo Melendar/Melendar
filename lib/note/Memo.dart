@@ -9,7 +9,7 @@ class Note extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
           title: const Text('메모'),
-          backgroundColor: Colors.green[100]
+          backgroundColor: Colors.white10
       ),
       body: const Center(
         child: Text('No Memos Yet!', style: TextStyle(fontSize: 24)),

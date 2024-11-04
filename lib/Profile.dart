@@ -17,14 +17,10 @@ class Profile extends State<RegistProfile> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar:
-          AppBar(title: const Text
-            ('내 정보'), backgroundColor: Colors.green[100]),
-
+      appBar: AppBar(title: const Text('내 정보'), backgroundColor: Colors.white10),
       body: Padding(
         padding: const EdgeInsets.symmetric(vertical: 50, horizontal: 30),
         child: ListView(
-          //아래서 만든 위젯을 나열하는 순서
           children: <Widget>[
             imageProfile(),
             SizedBox(height: 30),
@@ -37,7 +33,6 @@ class Profile extends State<RegistProfile> {
   }
 
   Widget imageProfile() {
-    //프로필 이미지
     return Center(
       child: Stack(
         children: <Widget>[
@@ -47,19 +42,34 @@ class Profile extends State<RegistProfile> {
                 ? AssetImage('assets/profile.jfif') as ImageProvider
                 : FileImage(File(_imageFile!.path)),
           ),
-          // 원 밖의 우측 상단에 아이콘을 배치
           Positioned(
-            top: 0,
-            right: 0,
+            bottom: 5, // 프로필 사진과 아이콘이 살짝 겹치도록 위치 조정
+            right: 5,
             child: InkWell(
               onTap: () {
                 showModalBottomSheet(
-                    context: context, builder: ((builder) => bottomSheet()));
+                  context: context,
+                  builder: (builder) => bottomSheet(),
+                  isScrollControlled: true, // 모달이 스크롤 가능하도록 설정
+                );
               },
-              child: Icon(
-                Icons.add_a_photo_outlined,
-                color: secondaryTextColor,
-                size: 30, // 크기 조정 가능
+              child: Container(
+                width: 35,
+                height: 35,
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white, // 테두리를 흰색으로 설정해 프로필과 구분
+                    width: 3,
+                  ),
+                ),
+                child: Icon(
+                  Icons.add_circle, // `plus_circle` 대신 `add_circle`을 사용 (Dart에서는 `plus_circle`이 없음)
+                  color: Colors.white,
+                  size: 20,
+                ),
+
               ),
             ),
           ),
@@ -69,43 +79,54 @@ class Profile extends State<RegistProfile> {
   }
 
   Widget nameTextField() {
-    //네임 필드 위젯
     return TextFormField(
       decoration: InputDecoration(
-        border: OutlineInputBorder(
+        border: UnderlineInputBorder(
           borderSide: BorderSide(
             color: primaryTextColor,
           ),
         ),
-        focusedBorder: OutlineInputBorder(
+        focusedBorder: UnderlineInputBorder(
           borderSide: BorderSide(
             color: secondaryTextColor,
             width: 2,
           ),
         ),
         prefixIcon: Icon(
-          Icons.person,
+          Icons.person_outline,
           color: primaryTextColor,
         ),
-        labelText: '이름을 입력하세요',
+        labelText: '이름',
+        labelStyle: TextStyle(color: primaryTextColor),
       ),
     );
   }
 
   Widget bottomSheet() {
-    //프로필 변경 위젯 이미지 변경 연결
     return Container(
-      height: 150,
-      width: MediaQuery.of(context).size.width,
-      margin: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: <Widget>[
-          IconButton(
-            icon: Icon(Icons.photo_outlined, size: 50),
-            onPressed: () {
-              takePhoto(ImageSource.gallery);
-            },
+      padding: EdgeInsets.symmetric(vertical: 20),
+      child: Wrap( // Wrap을 사용하여 내용이 화면을 넘어가지 않도록 조정
+        children: [
+          Center(
+            child: Text(
+              '프로필 변경하기',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+          ),
+          SizedBox(height: 20),
+          Center(
+            child: ElevatedButton.icon(
+              icon: Icon(Icons.photo_library),
+              label: Text("앨범에서 사진 선택"),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () {
+                Navigator.of(context).pop(); // 창 닫기
+                takePhoto(ImageSource.gallery); // 갤러리에서 사진 선택
+              },
+            ),
           ),
         ],
       ),
