@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "686440382313",
-    "project_id": "melendar-c726f",
-    "storage_bucket": "melendar-c726f.firebasestorage.app"
+    "project_number": "863247481680",
+    "project_id": "melendar-29396",
+    "storage_bucket": "melendar-29396.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:686440382313:android:20ad730297617efbefc7f8",
+        "mobilesdk_app_id": "1:863247481680:android:bbfdd6740d06b285afca55",
         "android_client_info": {
           "package_name": "com.example.melendar_back"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyAsI0hC2_kS3HsZ_M5O10u1rEoSUS1jg-4"
+          "current_key": "AIzaSyALE0dTTBKxxenK15dxWlR_Ur9wZ290Zto"
         }
       ],
       "services": {

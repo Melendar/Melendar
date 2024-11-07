@@ -41,48 +41,49 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyCuaznsZNryYEETu4_tPrmXfXRlzYc4G-E',
-    appId: '1:686440382313:web:7876d3cd1b4265e2efc7f8',
-    messagingSenderId: '686440382313',
-    projectId: 'melendar-c726f',
-    authDomain: 'melendar-c726f.firebaseapp.com',
-    storageBucket: 'melendar-c726f.firebasestorage.app',
-    measurementId: 'G-GF66DXTJVK',
+    apiKey: 'AIzaSyD18yZftmoZlmqUjD_wyjcf1BBHmXR5ltk',
+    appId: '1:863247481680:web:82e0e94ead50034fafca55',
+    messagingSenderId: '863247481680',
+    projectId: 'melendar-29396',
+    authDomain: 'melendar-29396.firebaseapp.com',
+    storageBucket: 'melendar-29396.firebasestorage.app',
+    measurementId: 'G-0Z8LVEFQ6C',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAsI0hC2_kS3HsZ_M5O10u1rEoSUS1jg-4',
-    appId: '1:686440382313:android:20ad730297617efbefc7f8',
-    messagingSenderId: '686440382313',
-    projectId: 'melendar-c726f',
-    storageBucket: 'melendar-c726f.firebasestorage.app',
+    apiKey: 'AIzaSyALE0dTTBKxxenK15dxWlR_Ur9wZ290Zto',
+    appId: '1:863247481680:android:bbfdd6740d06b285afca55',
+    messagingSenderId: '863247481680',
+    projectId: 'melendar-29396',
+    storageBucket: 'melendar-29396.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDojFZegh_VmBLmXxX4g6gzgp486nDff2c',
-    appId: '1:686440382313:ios:926bab506bc90bd7efc7f8',
-    messagingSenderId: '686440382313',
-    projectId: 'melendar-c726f',
-    storageBucket: 'melendar-c726f.firebasestorage.app',
+    apiKey: 'AIzaSyBkafJpAgQzCrzDflF-pz4dafDxLjHRWLY',
+    appId: '1:863247481680:ios:9ed9e7426be87ed5afca55',
+    messagingSenderId: '863247481680',
+    projectId: 'melendar-29396',
+    storageBucket: 'melendar-29396.firebasestorage.app',
     iosBundleId: 'com.example.melendarBack',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyDojFZegh_VmBLmXxX4g6gzgp486nDff2c',
-    appId: '1:686440382313:ios:926bab506bc90bd7efc7f8',
-    messagingSenderId: '686440382313',
-    projectId: 'melendar-c726f',
-    storageBucket: 'melendar-c726f.firebasestorage.app',
+    apiKey: 'AIzaSyBkafJpAgQzCrzDflF-pz4dafDxLjHRWLY',
+    appId: '1:863247481680:ios:9ed9e7426be87ed5afca55',
+    messagingSenderId: '863247481680',
+    projectId: 'melendar-29396',
+    storageBucket: 'melendar-29396.firebasestorage.app',
     iosBundleId: 'com.example.melendarBack',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyCuaznsZNryYEETu4_tPrmXfXRlzYc4G-E',
-    appId: '1:686440382313:web:0f5a3809a7eeed03efc7f8',
-    messagingSenderId: '686440382313',
-    projectId: 'melendar-c726f',
-    authDomain: 'melendar-c726f.firebaseapp.com',
-    storageBucket: 'melendar-c726f.firebasestorage.app',
-    measurementId: 'G-YJ164GSRVH',
+    apiKey: 'AIzaSyD18yZftmoZlmqUjD_wyjcf1BBHmXR5ltk',
+    appId: '1:863247481680:web:66a356e72ace74afafca55',
+    messagingSenderId: '863247481680',
+    projectId: 'melendar-29396',
+    authDomain: 'melendar-29396.firebaseapp.com',
+    storageBucket: 'melendar-29396.firebasestorage.app',
+    measurementId: 'G-6J1N13VCJ5',
   );
+
 }
