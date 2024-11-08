@@ -1,0 +1,6 @@
+# 텍스트 파일은 LF로 설정
+* text eol=crlf
+
+# Windows 환경에서 생성된 파일들은 CRLF로 설정
+*.bat eol=crlf
+*.cmd eol=crlf
