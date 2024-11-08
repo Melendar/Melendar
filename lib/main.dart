@@ -5,8 +5,7 @@ import 'calendar/calendar.dart';
 import 'group/screens/group_list_screen.dart';
 import 'note/Memo.dart'; // 메모 화면 import
 import 'Profile.dart'; // 프로필 페이지 import
-import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/material.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('ko', ''); // 날짜 형식 초기화
