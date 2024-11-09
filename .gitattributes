@@ -1,6 +1,7 @@
-# 텍스트 파일은 LF로 설정
-* text eol=crlf
+# 모든 텍스트 파일은 LF로 설정 (Unix 표준)
+* text eol=lf
 
-# Windows 환경에서 생성된 파일들은 CRLF로 설정
+# Windows 환경에서 실행되는 스크립트 파일만 CRLF로 설정
 *.bat eol=crlf
 *.cmd eol=crlf
+*.ps1 eol=crlf

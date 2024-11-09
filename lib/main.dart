@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
+import 'service/user_service.dart';
+import 'service/memo_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(MyApp());
 }
 
@@ -28,11 +27,9 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
+// 상태 관리를 위한 클래스
 class _HomePageState extends State<HomePage> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   User? _user;
-  List<Map<String, dynamic>> _memos = [];
   String _nickname = '';
   String _profileImageUrl = '';
   String _newNickname = '';
@@ -48,156 +45,65 @@ class _HomePageState extends State<HomePage> {
   String _searchedUserProfileImage = '';
   List<Map<String, dynamic>> _searchedMemos = [];
 
+  // 구글 로그인 자동 실행
   @override
   void initState() {
     super.initState();
     _signInWithGoogle();
   }
 
+  // 구글 로그인
   Future<void> _signInWithGoogle() async {
-    try {
-      final GoogleAuthProvider googleProvider = GoogleAuthProvider();
-      final UserCredential userCredential =
-          await _auth.signInWithPopup(googleProvider);
-      setState(() => _user = userCredential.user);
-      await _handleUserInFirestore();
-      await _fetchMemos();
-    } catch (e) {
-      print("Google 로그인 오류: $e");
-    }
+    await signInWithGoogle();
+    setState(() => _user = FirebaseAuth.instance.currentUser);
+    await _handleUserInFirestore();
   }
 
   Future<void> _handleUserInFirestore() async {
-    if (_user == null) return;
-
-    final userRef = _firestore.collection('Users').doc(_user!.uid);
-    final userDoc = await userRef.get();
-
-    if (!userDoc.exists) {
-      await userRef.set({
-        'userId': _user!.uid,
-        'nickname': _user!.displayName ?? 'Anonymous',
-        'profileImage': _user!.photoURL ?? '',
-      });
-    }
-
-    _nickname = _user!.displayName ?? 'Anonymous';
-    _profileImageUrl = _user!.photoURL ?? '';
-    setState(() {});
-  }
-
-  // 닉네임 업데이트
-  Future<void> _updateNickname() async {
-    if (_user == null || _newNickname.isEmpty) return;
-    await _firestore.collection('Users').doc(_user!.uid).update({
-      'nickname': _newNickname,
-    });
+    await handleUserInFirestore();
     setState(() {
-      _nickname = _newNickname;
+      _nickname = _user!.displayName ?? 'Anonymous';
+      _profileImageUrl = _user!.photoURL ?? '';
     });
   }
 
-  // 이미지 업데이트
-  Future<void> _updateProfileImage() async {
-    if (_user == null || _newProfileImageUrl.isEmpty) return;
-    await _firestore.collection('Users').doc(_user!.uid).update({
-      'profileImage': _newProfileImageUrl,
-    });
-    setState(() {
-      _profileImageUrl = _newProfileImageUrl;
-    });
-  }
-
-  Future<void> _fetchMemos() async {
-    if (_user == null) return;
-    final querySnapshot = await _firestore
-        .collection('Memos')
-        .where('user_id', isEqualTo: _user!.uid)
-        .orderBy('date', descending: true)
-        .get();
-
-    setState(() {
-      _memos = querySnapshot.docs.map((doc) {
-        return {
-          'memoId': doc.id,
-          'content': doc['content'],
-          'title': doc['title'],
-          'date': doc['date'],
-        };
-      }).toList();
-    });
-  }
-
-  // 메모 생성
-  Future<void> _createMemo() async {
-    if (_user == null || _memoTitle.isEmpty || _memoContent.isEmpty) return;
-    await _firestore.collection('Memos').add({
-      'user_id': _user!.uid,
-      'date': FieldValue.serverTimestamp(),
-      'title': _memoTitle,
-      'content': _memoContent,
-    });
-    await _fetchMemos();
-  }
-
-  // 메모 업데이트
-  Future<void> _updateMemo() async {
-    if (_updateMemoId.isEmpty ||
-        _updateMemoTitle.isEmpty ||
-        _updateMemoContent.isEmpty) return;
-    await _firestore.collection('Memos').doc(_updateMemoId).update({
-      'title': _updateMemoTitle,
-      'content': _updateMemoContent,
-    });
-    await _fetchMemos();
-  }
-
-  // 메모 삭제
-  Future<void> _deleteMemo() async {
-    if (_deleteMemoId.isEmpty) return;
-    await _firestore.collection('Memos').doc(_deleteMemoId).delete();
-    await _fetchMemos();
-  }
-
-  // userId 값으로 사용자 정보 가져오기
   Future<void> _fetchUserById() async {
-    if (_searchUserId.isEmpty) return;
-    final userDoc =
-        await _firestore.collection('Users').doc(_searchUserId).get();
-
-    if (userDoc.exists) {
+    await fetchUserById(_searchUserId, (nickname, profileImageUrl) {
       setState(() {
-        _searchedUserNickname = userDoc['nickname'] ?? 'Anonymous';
-        _searchedUserProfileImage = userDoc['profileImage'] ?? '';
+        _searchedUserNickname = nickname;
+        _searchedUserProfileImage = profileImageUrl;
       });
-      print("사용자 데이터를 가져왔습니다: $_searchedUserNickname");
-    } else {
-      print("사용자를 찾을 수 없습니다.");
-    }
+    });
   }
 
-  // userId 값으로 메모 정보 가져오기
-  Future<void> _fetchMemosByUserId() async {
-    if (_searchUserId.isEmpty) return;
-    final querySnapshot = await _firestore
-        .collection('Memos')
-        .where('user_id', isEqualTo: _searchUserId)
-        .orderBy('date', descending: true)
-        .get();
+  Future<void> _updateNickname() async {
+    await updateNickname(_newNickname, (nickname) {
+      setState(() => _nickname = nickname);
+    });
+  }
 
-    setState(() {
-    _searchedMemos = querySnapshot.docs.map((doc) {
-      final timestamp = doc['date'] as Timestamp?;
-      final date = timestamp != null ? timestamp.toDate().toString() : 'No Date';
-      return {
-        'memoId': doc.id,
-        'content': doc['content'],
-        'title': doc['title'],
-        'date': date,
-      };
-    }).toList();
-  });
-    print("메모 데이터를 가져왔습니다: ${_searchedMemos.length}개");
+  Future<void> _updateProfileImage() async {
+    await updateProfileImage(_newProfileImageUrl, (url) {
+      setState(() => _profileImageUrl = url);
+    });
+  }
+
+  Future<void> _createMemo() async {
+    await createMemo(_user!.uid, _memoTitle, _memoContent);
+  }
+
+  Future<void> _updateMemo() async {
+    await updateMemo(_user!.uid, _updateMemoId, _updateMemoTitle, _updateMemoContent);
+  }
+
+  Future<void> _deleteMemo() async {
+    await deleteMemo(_user!.uid, _deleteMemoId);
+  }
+
+  Future<void> _fetchMemosByUserId() async {
+    await fetchMemosByUserId(_searchUserId, (memos) {
+      setState(() => _searchedMemos = memos);
+    });
   }
 
   @override
@@ -271,43 +177,53 @@ class _HomePageState extends State<HomePage> {
                     child: Text('메모 삭제'),
                   ),
                   TextField(
-                  decoration: InputDecoration(labelText: '검색할 User ID 입력'),
-                  onChanged: (value) => _searchUserId = value,
-                ),
-                ElevatedButton(
-                  onPressed: _fetchUserById,
-                  child: Text('User 정보 가져오기'),
-                ),
-                if (_searchedUserNickname.isNotEmpty) ...[
-                  SizedBox(height: 16),
-                  CircleAvatar(
-                    backgroundImage:
-                        NetworkImage(_searchedUserProfileImage ?? ''),
-                    radius: 40,
+                    decoration: InputDecoration(labelText: '검색할 User ID 입력'),
+                    onChanged: (value) => _searchUserId = value,
                   ),
-                  Text('닉네임: $_searchedUserNickname'),
+                  ElevatedButton(
+                    onPressed: _fetchUserById,
+                    child: Text('User 정보 가져오기'),
+                  ),
+                  if (_searchedUserNickname.isNotEmpty) ...[
+                    SizedBox(height: 16),
+                    CircleAvatar(
+                      backgroundImage:
+                          NetworkImage(_searchedUserProfileImage ?? ''),
+                      radius: 40,
+                    ),
+                    Text('닉네임: $_searchedUserNickname'),
+                  ],
+                  ElevatedButton(
+                    onPressed: _fetchMemosByUserId,
+                    child: Text('User의 모든 메모 가져오기'),
+                  ),
+                  if (_searchedMemos.isNotEmpty)
+                    Column(
+                      children: _searchedMemos.map((memo) {
+                        return Card(
+                          child: ListTile(
+                            title: Text(memo['title']),
+                            subtitle: Text(memo['content']),
+                            trailing: Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(memo['date']),
+                                Text(
+                                  'ID: ${memo['memoId']}',
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  if (_searchedMemos.isEmpty && _searchUserId.isNotEmpty)
+                    Text('메모가 없습니다.'),
                 ],
-                ElevatedButton(
-                  onPressed: _fetchMemosByUserId,
-                  child: Text('User의 모든 메모 가져오기'),
-                ),
-                if (_searchedMemos.isNotEmpty)
-                  Column(
-                    children: _searchedMemos.map((memo) {
-                      return Card(
-                        child: ListTile(
-                          title: Text(memo['title']),
-                          subtitle: Text(memo['content']),
-                          trailing: Text(memo['date']),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                if (_searchedMemos.isEmpty && _searchUserId.isNotEmpty)
-                  Text('메모가 없습니다.'),
-              ],
+              ),
             ),
-          ),
     );
   }
 }
