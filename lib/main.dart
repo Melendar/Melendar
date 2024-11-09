@@ -60,10 +60,11 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _handleUserInFirestore() async {
-    await handleUserInFirestore();
-    setState(() {
-      _nickname = _user!.displayName ?? 'Anonymous';
-      _profileImageUrl = _user!.photoURL ?? '';
+    await handleUserInFirestore((nickname, profileImageUrl) {
+      setState(() {
+        _nickname = nickname;
+        _profileImageUrl = profileImageUrl;
+      });
     });
   }
 
@@ -83,9 +84,27 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _updateProfileImage() async {
-    await updateProfileImage(_newProfileImageUrl, (url) {
-      setState(() => _profileImageUrl = url);
-    });
+    try {
+      print("프로필 이미지 변경 시작");
+
+      // Firebase Storage로 이미지 업로드 및 Firestore 업데이트
+      await updateProfileImage((downloadUrl) {
+        if (downloadUrl.isNotEmpty) {
+          print("Firestore에 업데이트된 프로필 이미지 URL: $downloadUrl");
+
+          // UI 업데이트
+          setState(() {
+            _profileImageUrl = downloadUrl;
+          });
+
+          print("UI 업데이트 완료");
+        } else {
+          print("다운로드 URL이 비어있습니다.");
+        }
+      });
+    } catch (e) {
+      print("프로필 이미지 업데이트 오류: $e");
+    }
   }
 
   Future<void> _createMemo() async {
@@ -93,7 +112,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _updateMemo() async {
-    await updateMemo(_user!.uid, _updateMemoId, _updateMemoTitle, _updateMemoContent);
+    await updateMemo(
+        _user!.uid, _updateMemoId, _updateMemoTitle, _updateMemoContent);
   }
 
   Future<void> _deleteMemo() async {
@@ -137,7 +157,22 @@ class _HomePageState extends State<HomePage> {
                     onChanged: (value) => _newProfileImageUrl = value,
                   ),
                   ElevatedButton(
-                    onPressed: _updateProfileImage,
+                    onPressed: () async {
+                      print("프로필 이미지 변경 버튼 클릭됨");
+
+                      // 이미지 업로드 및 Firestore 업데이트
+                      await updateProfileImage((downloadUrl) {
+                        if (downloadUrl.isNotEmpty) {
+                          // UI 업데이트
+                          setState(() {
+                            _profileImageUrl = downloadUrl;
+                          });
+                          print("UI 업데이트 완료: $_profileImageUrl");
+                        } else {
+                          print("이미지 업로드 실패 또는 다운로드 URL이 비어있음");
+                        }
+                      });
+                    },
                     child: Text('프로필 이미지 변경'),
                   ),
                   TextField(
@@ -187,8 +222,7 @@ class _HomePageState extends State<HomePage> {
                   if (_searchedUserNickname.isNotEmpty) ...[
                     SizedBox(height: 16),
                     CircleAvatar(
-                      backgroundImage:
-                          NetworkImage(_searchedUserProfileImage ?? ''),
+                      backgroundImage: NetworkImage(_profileImageUrl),
                       radius: 40,
                     ),
                     Text('닉네임: $_searchedUserNickname'),
