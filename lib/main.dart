@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'service/event_service.dart';
 import 'firebase_options.dart';
+import 'service/user_service.dart';
+import 'service/memo_service.dart';
+import 'service/event_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  runApp(const MyApp());
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -17,132 +17,251 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Calendar Event Test',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const EventTestPage(),
+      title: 'Firestore Memo App',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: HomePage(),
     );
   }
 }
 
-class EventTestPage extends StatefulWidget {
-  const EventTestPage({super.key});
-
+class HomePage extends StatefulWidget {
+  
   @override
-  _EventTestPageState createState() => _EventTestPageState();
+  _HomePageState createState() => _HomePageState();
 }
 
-class _EventTestPageState extends State<EventTestPage> {
-  final EventService _eventService = EventService();
+// 상태 관리를 위한 클래스
+class _HomePageState extends State<HomePage> {
+  User? _user;
+  String _nickname = '';
+  String _profileImageUrl = '';
+  String _newNickname = '';
+  String _newProfileImageUrl = '';
+  String _memoTitle = '';
+  String _memoContent = '';
+  String _updateMemoId = '';
+  String _updateMemoTitle = '';
+  String _updateMemoContent = '';
+  String _deleteMemoId = '';
+  String _searchUserId = '';
+  String _searchedUserNickname = '';
+  String _searchedUserProfileImage = '';
+  List<Map<String, dynamic>> _searchedMemos = [];
 
-  // Controllers for input fields
-  final TextEditingController _groupIdController = TextEditingController();
-  final TextEditingController _taskController = TextEditingController();
-  final TextEditingController _eventIdController = TextEditingController();
+  // 구글 로그인 자동 실행
+  @override
+  void initState() {
+    super.initState();
+    _signInWithGoogle();
+  }
 
-  String _displayText = "캘린더 이벤트 테스트를 위한 버튼을 눌러보세요.";
-  final String testUserId = "user1234"; // 고정된 userId
+  // 구글 로그인
+  Future<void> _signInWithGoogle() async {
+    await signInWithGoogle();
+    setState(() => _user = FirebaseAuth.instance.currentUser);
+    await _handleUserInFirestore();
+  }
 
-  // Event creation
-  Future<void> _createEvent() async {
-    String groupId = _groupIdController.text;
-    String task = _taskController.text;
-    DateTime date = DateTime.now(); // 현재 날짜를 이벤트 날짜로 설정
-
-    await _eventService.createEvent(groupId, task, date);
-    setState(() {
-      _displayText = "새로운 캘린더 이벤트 '$task'가 그룹 $groupId에 생성되었습니다.";
+  Future<void> _handleUserInFirestore() async {
+    await handleUserInFirestore((nickname, profileImageUrl) {
+      setState(() {
+        _nickname = nickname;
+        _profileImageUrl = profileImageUrl;
+      });
     });
   }
 
-  // Fetch events
-  Future<void> _getEventsByUser() async {
-    List<Map<String, dynamic>> events = await _eventService.getEventsByUser(testUserId);
-    setState(() {
-      _displayText = "조회된 이벤트: ${events.map((e) => e['task']).join(', ')}";
+  Future<void> _fetchUserById() async {
+    await fetchUserById(_searchUserId, (nickname, profileImageUrl) {
+      setState(() {
+        _searchedUserNickname = nickname;
+        _searchedUserProfileImage = profileImageUrl;
+      });
     });
   }
 
-  // Update event
-  Future<void> _updateEvent() async {
-    String groupId = _groupIdController.text;
-    String eventId = _eventIdController.text;
-    String newTask = _taskController.text;
-
-    await _eventService.updateEvent(groupId, eventId, newTask);
-    setState(() {
-      _displayText = "이벤트가 업데이트되었습니다.";
+  Future<void> _updateNickname() async {
+    await updateNickname(_newNickname, (nickname) {
+      setState(() => _nickname = nickname);
     });
   }
 
-  // Delete event
-  Future<void> _deleteEvent() async {
-    String groupId = _groupIdController.text;
-    String eventId = _eventIdController.text;
+  Future<void> _updateProfileImage() async {
+    try {
+      print("프로필 이미지 변경 시작");
 
-    await _eventService.deleteEvent(groupId, eventId);
-    setState(() {
-      _displayText = "이벤트가 삭제되었습니다.";
+      // Firebase Storage로 이미지 업로드 및 Firestore 업데이트
+      await updateProfileImage((downloadUrl) {
+        if (downloadUrl.isNotEmpty) {
+          print("Firestore에 업데이트된 프로필 이미지 URL: $downloadUrl");
+
+          // UI 업데이트
+          setState(() {
+            _profileImageUrl = downloadUrl;
+          });
+
+          print("UI 업데이트 완료");
+        } else {
+          print("다운로드 URL이 비어있습니다.");
+        }
+      });
+    } catch (e) {
+      print("프로필 이미지 업데이트 오류: $e");
+    }
+  }
+
+  Future<void> _createMemo() async {
+    await createMemo(_user!.uid, _memoTitle, _memoContent);
+  }
+
+  Future<void> _updateMemo() async {
+    await updateMemo(
+        _user!.uid, _updateMemoId, _updateMemoTitle, _updateMemoContent);
+  }
+
+  Future<void> _deleteMemo() async {
+    await deleteMemo(_user!.uid, _deleteMemoId);
+  }
+
+  Future<void> _fetchMemosByUserId() async {
+    await fetchMemosByUserId(_searchUserId, (memos) {
+      setState(() => _searchedMemos = memos);
     });
   }
+  
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Calendar Event Test'),
+        title: Text('Firestore Memo App'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Text(
-                _displayText,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 20),
+      body: _user == null
+          ? Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    backgroundImage: NetworkImage(_profileImageUrl),
+                    radius: 40,
+                  ),
+                  SizedBox(height: 16),
+                  Text('닉네임: $_nickname'),
+                  TextField(
+                    decoration: InputDecoration(labelText: '새 닉네임'),
+                    onChanged: (value) => _newNickname = value,
+                  ),
+                  ElevatedButton(
+                    onPressed: _updateNickname,
+                    child: Text('닉네임 변경'),
+                  ),
+                  TextField(
+                    decoration: InputDecoration(labelText: '새 프로필 이미지 URL'),
+                    onChanged: (value) => _newProfileImageUrl = value,
+                  ),
+                  ElevatedButton(
+                    onPressed: () async {
+                      print("프로필 이미지 변경 버튼 클릭됨");
 
-              // Input fields
-              TextField(
-                controller: _groupIdController,
-                decoration: const InputDecoration(labelText: '그룹 ID'),
+                      // 이미지 업로드 및 Firestore 업데이트
+                      await updateProfileImage((downloadUrl) {
+                        if (downloadUrl.isNotEmpty) {
+                          // UI 업데이트
+                          setState(() {
+                            _profileImageUrl = downloadUrl;
+                          });
+                          print("UI 업데이트 완료: $_profileImageUrl");
+                        } else {
+                          print("이미지 업로드 실패 또는 다운로드 URL이 비어있음");
+                        }
+                      });
+                    },
+                    child: Text('프로필 이미지 변경'),
+                  ),
+                  TextField(
+                    decoration: InputDecoration(labelText: '메모 제목'),
+                    onChanged: (value) => _memoTitle = value,
+                  ),
+                  TextField(
+                    decoration: InputDecoration(labelText: '메모 내용'),
+                    onChanged: (value) => _memoContent = value,
+                  ),
+                  ElevatedButton(
+                    onPressed: _createMemo,
+                    child: Text('메모 생성'),
+                  ),
+                  TextField(
+                    decoration: InputDecoration(labelText: '수정할 메모 ID'),
+                    onChanged: (value) => _updateMemoId = value,
+                  ),
+                  TextField(
+                    decoration: InputDecoration(labelText: '새 메모 제목'),
+                    onChanged: (value) => _updateMemoTitle = value,
+                  ),
+                  TextField(
+                    decoration: InputDecoration(labelText: '새 메모 내용'),
+                    onChanged: (value) => _updateMemoContent = value,
+                  ),
+                  ElevatedButton(
+                    onPressed: _updateMemo,
+                    child: Text('메모 수정'),
+                  ),
+                  TextField(
+                    decoration: InputDecoration(labelText: '삭제할 메모 ID'),
+                    onChanged: (value) => _deleteMemoId = value,
+                  ),
+                  ElevatedButton(
+                    onPressed: _deleteMemo,
+                    child: Text('메모 삭제'),
+                  ),
+                  TextField(
+                    decoration: InputDecoration(labelText: '검색할 User ID 입력'),
+                    onChanged: (value) => _searchUserId = value,
+                  ),
+                  ElevatedButton(
+                    onPressed: _fetchUserById,
+                    child: Text('User 정보 가져오기'),
+                  ),
+                  if (_searchedUserNickname.isNotEmpty) ...[
+                    SizedBox(height: 16),
+                    CircleAvatar(
+                      backgroundImage: NetworkImage(_profileImageUrl),
+                      radius: 40,
+                    ),
+                    Text('닉네임: $_searchedUserNickname'),
+                  ],
+                  ElevatedButton(
+                    onPressed: _fetchMemosByUserId,
+                    child: Text('User의 모든 메모 가져오기'),
+                  ),
+                  if (_searchedMemos.isNotEmpty)
+                    Column(
+                      children: _searchedMemos.map((memo) {
+                        return Card(
+                          child: ListTile(
+                            title: Text(memo['title']),
+                            subtitle: Text(memo['content']),
+                            trailing: Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(memo['date']),
+                                Text(
+                                  'ID: ${memo['memoId']}',
+                                  style: TextStyle(
+                                      fontSize: 12, color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  if (_searchedMemos.isEmpty && _searchUserId.isNotEmpty)
+                    Text('메모가 없습니다.'),
+                ],
               ),
-              TextField(
-                controller: _taskController,
-                decoration: const InputDecoration(labelText: '이벤트 내용 (Task)'),
-              ),
-              TextField(
-                controller: _eventIdController,
-                decoration: const InputDecoration(labelText: '이벤트 ID (업데이트/삭제용)'),
-              ),
-              
-              const SizedBox(height: 20),
-
-              // Buttons for CRUD operations
-              ElevatedButton(
-                onPressed: _createEvent,
-                child: const Text('캘린더 이벤트 생성'),
-              ),
-              ElevatedButton(
-                onPressed: _getEventsByUser,
-                child: const Text('내 이벤트 조회'),
-              ),
-              ElevatedButton(
-                onPressed: _updateEvent,
-                child: const Text('이벤트 수정'),
-              ),
-              ElevatedButton(
-                onPressed: _deleteEvent,
-                child: const Text('이벤트 삭제'),
-              ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
   }
 }
