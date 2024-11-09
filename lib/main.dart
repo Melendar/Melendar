@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'service/group_service.dart';
+import 'service/event_service.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -17,94 +17,73 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Firestore CRUD Test',
+      title: 'Calendar Event Test',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const FirestoreTestPage(),
+      home: const EventTestPage(),
     );
   }
 }
 
-class FirestoreTestPage extends StatefulWidget {
-  const FirestoreTestPage({super.key});
+class EventTestPage extends StatefulWidget {
+  const EventTestPage({super.key});
 
   @override
-  _FirestoreTestPageState createState() => _FirestoreTestPageState();
+  _EventTestPageState createState() => _EventTestPageState();
 }
 
-class _FirestoreTestPageState extends State<FirestoreTestPage> {
-  final GroupService _groupService = GroupService();
+class _EventTestPageState extends State<EventTestPage> {
+  final EventService _eventService = EventService();
 
   // Controllers for input fields
-  final TextEditingController _groupNameController = TextEditingController();
-  final TextEditingController _groupDescriptionController = TextEditingController();
   final TextEditingController _groupIdController = TextEditingController();
-  final TextEditingController _userIdController = TextEditingController(); // 그룹원 추가와 그룹 나가기에 사용할 userId 입력 필드 추가
+  final TextEditingController _taskController = TextEditingController();
+  final TextEditingController _eventIdController = TextEditingController();
 
-  String _displayText = "Firestore CRUD 테스트를 위한 버튼을 눌러보세요.";
+  String _displayText = "캘린더 이벤트 테스트를 위한 버튼을 눌러보세요.";
+  final String testUserId = "user1234"; // 고정된 userId
 
-  // Test userId for personal group creation
-  final String testUserId = "user1234";
-
-  Future<void> _createPersonalGroup() async {
-    await _groupService.createPersonalGroup(testUserId);
-    setState(() {
-      _displayText = "개인그룹이 생성되었습니다.";
-    });
-  }
-
-  Future<void> _createGroup() async {
-    String groupName = _groupNameController.text;
-    String groupDescription = _groupDescriptionController.text;
-    await _groupService.createGroup(groupName, groupDescription, [testUserId]);
-    setState(() {
-      _displayText = "새로운 그룹 '$groupName'이 생성되었습니다.";
-    });
-  }
-
-  Future<void> _getGroupsByUser() async {
-    List<Map<String, dynamic>> groups = await _groupService.getGroupsByUser(testUserId);
-    setState(() {
-      _displayText = "조회된 그룹: ${groups.map((g) => g['group_name']).join(', ')}";
-    });
-  }
-
-  Future<void> _updateGroup() async {
+  // Event creation
+  Future<void> _createEvent() async {
     String groupId = _groupIdController.text;
-    String newGroupName = _groupNameController.text;
-    String newGroupDescription = _groupDescriptionController.text;
-    await _groupService.updateGroup(groupId, testUserId, newGroupName, newGroupDescription);
+    String task = _taskController.text;
+    DateTime date = DateTime.now(); // 현재 날짜를 이벤트 날짜로 설정
+
+    await _eventService.createEvent(groupId, task, date);
     setState(() {
-      _displayText = "그룹 정보가 업데이트되었습니다.";
+      _displayText = "새로운 캘린더 이벤트 '$task'가 그룹 $groupId에 생성되었습니다.";
     });
   }
 
-  Future<void> _leaveGroup() async {
-    String groupId = _groupIdController.text;
-    String userId = _userIdController.text;
-    await _groupService.leaveGroup(groupId, userId);
+  // Fetch events
+  Future<void> _getEventsByUser() async {
+    List<Map<String, dynamic>> events = await _eventService.getEventsByUser(testUserId);
     setState(() {
-      _displayText = "사용자 '$userId'가 그룹에서 나갔습니다.";
+      _displayText = "조회된 이벤트: ${events.map((e) => e['task']).join(', ')}";
     });
   }
 
-  Future<void> _deleteGroup() async {
+  // Update event
+  Future<void> _updateEvent() async {
     String groupId = _groupIdController.text;
-    await _groupService.deleteGroup(groupId);
+    String eventId = _eventIdController.text;
+    String newTask = _taskController.text;
+
+    await _eventService.updateEvent(groupId, eventId, newTask);
     setState(() {
-      _displayText = "그룹이 삭제되었습니다.";
+      _displayText = "이벤트가 업데이트되었습니다.";
     });
   }
 
-  Future<void> _addGroupMember() async {
+  // Delete event
+  Future<void> _deleteEvent() async {
     String groupId = _groupIdController.text;
-    // List<String> userId = _userIdController.text;
-    List<String> userId = _userIdController.text.split(',').map((id) => id.trim()).toList();
+    String eventId = _eventIdController.text;
 
-    await _groupService.addGroupMember(groupId, userId);
+    await _eventService.deleteEvent(groupId, eventId);
     setState(() {
-      _displayText = "사용자 '$userId'가 그룹에 추가되었습니다.";
+      _displayText = "이벤트가 삭제되었습니다.";
     });
   }
 
@@ -112,7 +91,7 @@ class _FirestoreTestPageState extends State<FirestoreTestPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Firestore CRUD Test'),
+        title: const Text('Calendar Event Test'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -126,55 +105,39 @@ class _FirestoreTestPageState extends State<FirestoreTestPage> {
                 style: const TextStyle(fontSize: 16),
               ),
               const SizedBox(height: 20),
-              
+
               // Input fields
-              TextField(
-                controller: _groupNameController,
-                decoration: const InputDecoration(labelText: '그룹 이름'),
-              ),
-              TextField(
-                controller: _groupDescriptionController,
-                decoration: const InputDecoration(labelText: '그룹 설명'),
-              ),
               TextField(
                 controller: _groupIdController,
                 decoration: const InputDecoration(labelText: '그룹 ID'),
               ),
               TextField(
-                controller: _userIdController,
-                decoration: const InputDecoration(labelText: '사용자 ID (그룹원 추가 및 나가기)'),
+                controller: _taskController,
+                decoration: const InputDecoration(labelText: '이벤트 내용 (Task)'),
+              ),
+              TextField(
+                controller: _eventIdController,
+                decoration: const InputDecoration(labelText: '이벤트 ID (업데이트/삭제용)'),
               ),
               
               const SizedBox(height: 20),
 
               // Buttons for CRUD operations
               ElevatedButton(
-                onPressed: _createPersonalGroup,
-                child: const Text('개인그룹 생성'),
+                onPressed: _createEvent,
+                child: const Text('캘린더 이벤트 생성'),
               ),
               ElevatedButton(
-                onPressed: _createGroup,
-                child: const Text('그룹 생성'),
+                onPressed: _getEventsByUser,
+                child: const Text('내 이벤트 조회'),
               ),
               ElevatedButton(
-                onPressed: _getGroupsByUser,
-                child: const Text('내 그룹 조회'),
+                onPressed: _updateEvent,
+                child: const Text('이벤트 수정'),
               ),
               ElevatedButton(
-                onPressed: _updateGroup,
-                child: const Text('그룹 수정'),
-              ),
-              ElevatedButton(
-                onPressed: _addGroupMember,
-                child: const Text('그룹원 추가'),
-              ),
-              ElevatedButton(
-                onPressed: _leaveGroup,
-                child: const Text('그룹 나가기'),
-              ),
-              ElevatedButton(
-                onPressed: _deleteGroup,
-                child: const Text('그룹 삭제'),
+                onPressed: _deleteEvent,
+                child: const Text('이벤트 삭제'),
               ),
             ],
           ),
