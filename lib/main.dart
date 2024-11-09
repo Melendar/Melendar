@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import './service/group_service.dart';
+import './service/event_service.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -26,57 +27,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class FirestoreService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  // 그룹 추가
-  Future<void> addGroup(String groupName, String groupDescription) async {
-    await _firestore.collection('Groups').add({
-      'group_name': groupName,
-      'group_description': groupDescription,
-      'members': [],
-    });
-  }
-
-  // 그룹 업데이트
-  Future<void> updateGroup(String groupId, String groupName, String groupDescription) async {
-    await _firestore.collection('Groups').doc(groupId).update({
-      'group_name': groupName,
-      'group_description': groupDescription,
-    });
-  }
-
-  // 그룹 삭제
-  Future<void> deleteGroup(String groupId) async {
-    await _firestore.collection('Groups').doc(groupId).delete();
-  }
-
-  // 그룹 목록 가져오기
-  Future<List<QueryDocumentSnapshot>> getGroups() async {
-    QuerySnapshot snapshot = await _firestore.collection('Groups').get();
-    return snapshot.docs;
-  }
-
-  // 캘린더 이벤트 추가
-  Future<void> addEvent(String groupId, String task, DateTime date) async {
-    await _firestore.collection('Groups').doc(groupId).collection('CalendarEvents').add({
-      'task': task,
-      'date': date.toIso8601String(),
-    });
-  }
-
-  // 캘린더 이벤트 목록 가져오기
-  Future<List<QueryDocumentSnapshot>> getEvents(String groupId) async {
-    QuerySnapshot snapshot = await _firestore.collection('Groups').doc(groupId).collection('CalendarEvents').get();
-    return snapshot.docs;
-  }
-
-  // 캘린더 이벤트 삭제
-  Future<void> deleteEvent(String groupId, String eventId) async {
-    await _firestore.collection('Groups').doc(groupId).collection('CalendarEvents').doc(eventId).delete();
-  }
-}
-
 class FirestoreTestPage extends StatefulWidget {
   const FirestoreTestPage({super.key});
 
@@ -85,54 +35,77 @@ class FirestoreTestPage extends StatefulWidget {
 }
 
 class _FirestoreTestPageState extends State<FirestoreTestPage> {
-  final FirestoreService _firestoreService = FirestoreService();
+  final GroupService _groupService = GroupService();
+  final EventService _eventService = EventService();
   String _displayText = "버튼을 눌러 Firestore 작업을 테스트해 보세요.";
 
-  // 그룹 추가
-  Future<void> _addGroup() async {
-    await _firestoreService.addGroup("테스트 그룹", "이것은 테스트 그룹입니다");
+  Future<void> _createGroup() async {
+    await _groupService.createGroup("테스트 그룹");
     setState(() {
       _displayText = "그룹이 추가되었습니다.";
     });
   }
 
-  // 그룹 목록 가져오기
-  Future<void> _getGroups() async {
-    List<QueryDocumentSnapshot> groups = await _firestoreService.getGroups();
+  Future<void> _getGroups(String userId) async {
+    await _groupService.getGroups(userId);
     setState(() {
-      _displayText = "그룹 목록: ${groups.map((g) => g['group_name']).toList()}";
+      _displayText = "그룹 목록을 불러왔습니다.";
     });
   }
 
-  // 그룹 업데이트
-  Future<void> _updateGroup(String groupId) async {
-    await _firestoreService.updateGroup(groupId, "업데이트된 그룹", "업데이트된 설명입니다");
+  Future<void> _updateGroup(String userGroupId) async {
+    await _groupService.updateGroup(userGroupId, description: "Updated description");
     setState(() {
-      _displayText = "그룹이 업데이트되었습니다.";
+      _displayText = "그룹이 수정되었습니다.";
     });
   }
 
-  // 그룹 삭제
-  Future<void> _deleteGroup(String groupId) async {
-    await _firestoreService.deleteGroup(groupId);
+  Future<void> _leaveGroup(String userGroupId) async {
+    await _groupService.leaveGroup(userGroupId);
     setState(() {
-      _displayText = "그룹이 삭제되었습니다.";
+      _displayText = "그룹에서 나갔습니다.";
     });
   }
 
-  // 이벤트 추가
-  Future<void> _addEvent(String groupId) async {
-    await _firestoreService.addEvent(groupId, "플러터 공부하기", DateTime.now());
+  Future<void> _addGroupMember(String userId, String groupId) async {
+    await _groupService.addGroupMember(userId, groupId);
     setState(() {
-      _displayText = "이벤트가 추가되었습니다.";
+      _displayText = "그룹원이 추가되었습니다.";
     });
   }
 
-  // 이벤트 목록 가져오기
-  Future<void> _getEvents(String groupId) async {
-    List<QueryDocumentSnapshot> events = await _firestoreService.getEvents(groupId);
+  Future<void> _getCalendar(String userId) async {
+    await _eventService.getCalendar(userId);
     setState(() {
-      _displayText = "이벤트 목록: ${events.map((e) => e['task']).toList()}";
+      _displayText = "캘린더를 불러왔습니다.";
+    });
+  }
+
+  Future<void> _createEvent(String groupId) async {
+    await _eventService.createEvent(groupId, "테스트 일정", DateTime.now());
+    setState(() {
+      _displayText = "일정이 추가되었습니다.";
+    });
+  }
+
+  Future<void> _updateEvent(String eventId) async {
+    await _eventService.updateEvent(eventId, "업데이트된 일정", DateTime.now());
+    setState(() {
+      _displayText = "일정이 수정되었습니다.";
+    });
+  }
+
+  Future<void> _deleteEvent(String eventId) async {
+    await _eventService.deleteEvent(eventId);
+    setState(() {
+      _displayText = "일정이 삭제되었습니다.";
+    });
+  }
+
+  Future<void> _searchEvents(String keyword) async {
+    await _eventService.searchEvents(keyword);
+    setState(() {
+      _displayText = "일정 검색 결과를 불러왔습니다.";
     });
   }
 
@@ -154,48 +127,44 @@ class _FirestoreTestPageState extends State<FirestoreTestPage> {
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _addGroup,
+              onPressed: _createGroup,
               child: const Text('그룹 추가하기'),
             ),
             ElevatedButton(
-              onPressed: _getGroups,
-              child: const Text('그룹 목록 가져오기'),
+              onPressed: () => _getGroups("userId1"),
+              child: const Text('내 그룹 불러오기'),
             ),
             ElevatedButton(
-              onPressed: () async {
-                List<QueryDocumentSnapshot> groups = await _firestoreService.getGroups();
-                if (groups.isNotEmpty) {
-                  _updateGroup(groups.first.id);
-                }
-              },
-              child: const Text('그룹 업데이트하기'),
+              onPressed: () => _updateGroup("userGroupId1"),
+              child: const Text('그룹 수정하기'),
             ),
             ElevatedButton(
-              onPressed: () async {
-                List<QueryDocumentSnapshot> groups = await _firestoreService.getGroups();
-                if (groups.isNotEmpty) {
-                  _deleteGroup(groups.first.id);
-                }
-              },
-              child: const Text('그룹 삭제하기'),
+              onPressed: () => _leaveGroup("userGroupId1"),
+              child: const Text('그룹 나가기'),
             ),
             ElevatedButton(
-              onPressed: () async {
-                List<QueryDocumentSnapshot> groups = await _firestoreService.getGroups();
-                if (groups.isNotEmpty) {
-                  _addEvent(groups.first.id);
-                }
-              },
-              child: const Text('이벤트 추가하기'),
+              onPressed: () => _addGroupMember("userId1", "groupId1"),
+              child: const Text('그룹원 추가하기'),
             ),
             ElevatedButton(
-              onPressed: () async {
-                List<QueryDocumentSnapshot> groups = await _firestoreService.getGroups();
-                if (groups.isNotEmpty) {
-                  _getEvents(groups.first.id);
-                }
-              },
-              child: const Text('이벤트 목록 가져오기'),
+              onPressed: () => _getCalendar("userId1"),
+              child: const Text('내 캘린더 불러오기'),
+            ),
+            ElevatedButton(
+              onPressed: () => _createEvent("groupId1"),
+              child: const Text('일정 추가하기'),
+            ),
+            ElevatedButton(
+              onPressed: () => _updateEvent("eventId1"),
+              child: const Text('일정 수정하기'),
+            ),
+            ElevatedButton(
+              onPressed: () => _deleteEvent("eventId1"),
+              child: const Text('일정 삭제하기'),
+            ),
+            ElevatedButton(
+              onPressed: () => _searchEvents("keyword"),
+              child: const Text('일정 검색하기'),
             ),
           ],
         ),
