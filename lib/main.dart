@@ -17,12 +17,63 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Firestore Test',
+      title: 'Firestore CRUD Test',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
       home: const FirestoreTestPage(),
     );
+  }
+}
+
+class FirestoreService {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  // 그룹 추가
+  Future<void> addGroup(String groupName, String groupDescription) async {
+    await _firestore.collection('Groups').add({
+      'group_name': groupName,
+      'group_description': groupDescription,
+      'members': [],
+    });
+  }
+
+  // 그룹 업데이트
+  Future<void> updateGroup(String groupId, String groupName, String groupDescription) async {
+    await _firestore.collection('Groups').doc(groupId).update({
+      'group_name': groupName,
+      'group_description': groupDescription,
+    });
+  }
+
+  // 그룹 삭제
+  Future<void> deleteGroup(String groupId) async {
+    await _firestore.collection('Groups').doc(groupId).delete();
+  }
+
+  // 그룹 목록 가져오기
+  Future<List<QueryDocumentSnapshot>> getGroups() async {
+    QuerySnapshot snapshot = await _firestore.collection('Groups').get();
+    return snapshot.docs;
+  }
+
+  // 캘린더 이벤트 추가
+  Future<void> addEvent(String groupId, String task, DateTime date) async {
+    await _firestore.collection('Groups').doc(groupId).collection('CalendarEvents').add({
+      'task': task,
+      'date': date.toIso8601String(),
+    });
+  }
+
+  // 캘린더 이벤트 목록 가져오기
+  Future<List<QueryDocumentSnapshot>> getEvents(String groupId) async {
+    QuerySnapshot snapshot = await _firestore.collection('Groups').doc(groupId).collection('CalendarEvents').get();
+    return snapshot.docs;
+  }
+
+  // 캘린더 이벤트 삭제
+  Future<void> deleteEvent(String groupId, String eventId) async {
+    await _firestore.collection('Groups').doc(groupId).collection('CalendarEvents').doc(eventId).delete();
   }
 }
 
@@ -34,72 +85,116 @@ class FirestoreTestPage extends StatefulWidget {
 }
 
 class _FirestoreTestPageState extends State<FirestoreTestPage> {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirestoreService _firestoreService = FirestoreService();
+  String _displayText = "버튼을 눌러 Firestore 작업을 테스트해 보세요.";
 
   // 그룹 추가
-  Future<void> _addGroup(String groupName, String groupDescription) async {
-    await _firestore.collection('Groups').add({
-      'group_name': groupName,
-      'group_description': groupDescription,
-      'events': [],
-      'members': [],
+  Future<void> _addGroup() async {
+    await _firestoreService.addGroup("테스트 그룹", "이것은 테스트 그룹입니다");
+    setState(() {
+      _displayText = "그룹이 추가되었습니다.";
     });
   }
 
-  // 캘린더 이벤트 추가
-  Future<void> _addEvent(String groupId, String task, DateTime date) async {
-    await _firestore.collection('CalendarEvents').add({
-      'group_id': groupId,
-      'task': task,
-      'date': date.toIso8601String(),
-    });
-  }
-
-  // 그룹 리스트 가져오기
+  // 그룹 목록 가져오기
   Future<void> _getGroups() async {
-    QuerySnapshot snapshot = await _firestore.collection('Groups').get();
-    for (var doc in snapshot.docs) {
-      print('Group ID: ${doc.id}');
-      print('Group Name: ${doc['group_name']}');
-      print('Group Description: ${doc['group_description']}');
-    }
+    List<QueryDocumentSnapshot> groups = await _firestoreService.getGroups();
+    setState(() {
+      _displayText = "그룹 목록: ${groups.map((g) => g['group_name']).toList()}";
+    });
   }
 
-  // 캘린더 이벤트 리스트 가져오기
-  Future<void> _getEvents() async {
-    QuerySnapshot snapshot = await _firestore.collection('CalendarEvents').get();
-    for (var doc in snapshot.docs) {
-      print('Event ID: ${doc.id}');
-      print('Group ID: ${doc['group_id']}');
-      print('Task: ${doc['task']}');
-      print('Date: ${doc['date']}');
-    }
+  // 그룹 업데이트
+  Future<void> _updateGroup(String groupId) async {
+    await _firestoreService.updateGroup(groupId, "업데이트된 그룹", "업데이트된 설명입니다");
+    setState(() {
+      _displayText = "그룹이 업데이트되었습니다.";
+    });
+  }
+
+  // 그룹 삭제
+  Future<void> _deleteGroup(String groupId) async {
+    await _firestoreService.deleteGroup(groupId);
+    setState(() {
+      _displayText = "그룹이 삭제되었습니다.";
+    });
+  }
+
+  // 이벤트 추가
+  Future<void> _addEvent(String groupId) async {
+    await _firestoreService.addEvent(groupId, "플러터 공부하기", DateTime.now());
+    setState(() {
+      _displayText = "이벤트가 추가되었습니다.";
+    });
+  }
+
+  // 이벤트 목록 가져오기
+  Future<void> _getEvents(String groupId) async {
+    List<QueryDocumentSnapshot> events = await _firestoreService.getEvents(groupId);
+    setState(() {
+      _displayText = "이벤트 목록: ${events.map((e) => e['task']).toList()}";
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Firestore Test'),
+        title: const Text('Firestore CRUD Test'),
       ),
-      body: Center(
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            ElevatedButton(
-              onPressed: () => _addGroup('테스트 그룹', '이것은 테스트 그룹입니다'),
-              child: const Text('그룹 추가하기'),
+            Text(
+              _displayText,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16),
             ),
+            const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () => _addEvent('group123', '플러터 공부하기', DateTime.now()),
-              child: const Text('캘린더 이벤트 추가하기'),
+              onPressed: _addGroup,
+              child: const Text('그룹 추가하기'),
             ),
             ElevatedButton(
               onPressed: _getGroups,
               child: const Text('그룹 목록 가져오기'),
             ),
             ElevatedButton(
-              onPressed: _getEvents,
+              onPressed: () async {
+                List<QueryDocumentSnapshot> groups = await _firestoreService.getGroups();
+                if (groups.isNotEmpty) {
+                  _updateGroup(groups.first.id);
+                }
+              },
+              child: const Text('그룹 업데이트하기'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                List<QueryDocumentSnapshot> groups = await _firestoreService.getGroups();
+                if (groups.isNotEmpty) {
+                  _deleteGroup(groups.first.id);
+                }
+              },
+              child: const Text('그룹 삭제하기'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                List<QueryDocumentSnapshot> groups = await _firestoreService.getGroups();
+                if (groups.isNotEmpty) {
+                  _addEvent(groups.first.id);
+                }
+              },
+              child: const Text('이벤트 추가하기'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                List<QueryDocumentSnapshot> groups = await _firestoreService.getGroups();
+                if (groups.isNotEmpty) {
+                  _getEvents(groups.first.id);
+                }
+              },
               child: const Text('이벤트 목록 가져오기'),
             ),
           ],
