@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'service/user_service.dart';
 import 'service/memo_service.dart';
@@ -8,7 +9,7 @@ import 'service/event_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -25,6 +26,8 @@ class MyApp extends StatelessWidget {
 }
 
 class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
   
   @override
   _HomePageState createState() => _HomePageState();
@@ -134,30 +137,30 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Firestore Memo App'),
+        title: const Text('Firestore Memo App'),
       ),
       body: _user == null
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
                   CircleAvatar(
                     backgroundImage: NetworkImage(_profileImageUrl),
                     radius: 40,
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Text('닉네임: $_nickname'),
                   TextField(
-                    decoration: InputDecoration(labelText: '새 닉네임'),
+                    decoration: const InputDecoration(labelText: '새 닉네임'),
                     onChanged: (value) => _newNickname = value,
                   ),
                   ElevatedButton(
                     onPressed: _updateNickname,
-                    child: Text('닉네임 변경'),
+                    child: const Text('닉네임 변경'),
                   ),
                   TextField(
-                    decoration: InputDecoration(labelText: '새 프로필 이미지 URL'),
+                    decoration: const InputDecoration(labelText: '새 프로필 이미지 URL'),
                     onChanged: (value) => _newProfileImageUrl = value,
                   ),
                   ElevatedButton(
@@ -177,54 +180,54 @@ class _HomePageState extends State<HomePage> {
                         }
                       });
                     },
-                    child: Text('프로필 이미지 변경'),
+                    child: const Text('프로필 이미지 변경'),
                   ),
                   TextField(
-                    decoration: InputDecoration(labelText: '메모 제목'),
+                    decoration: const InputDecoration(labelText: '메모 제목'),
                     onChanged: (value) => _memoTitle = value,
                   ),
                   TextField(
-                    decoration: InputDecoration(labelText: '메모 내용'),
+                    decoration: const InputDecoration(labelText: '메모 내용'),
                     onChanged: (value) => _memoContent = value,
                   ),
                   ElevatedButton(
                     onPressed: _createMemo,
-                    child: Text('메모 생성'),
+                    child: const Text('메모 생성'),
                   ),
                   TextField(
-                    decoration: InputDecoration(labelText: '수정할 메모 ID'),
+                    decoration: const InputDecoration(labelText: '수정할 메모 ID'),
                     onChanged: (value) => _updateMemoId = value,
                   ),
                   TextField(
-                    decoration: InputDecoration(labelText: '새 메모 제목'),
+                    decoration: const InputDecoration(labelText: '새 메모 제목'),
                     onChanged: (value) => _updateMemoTitle = value,
                   ),
                   TextField(
-                    decoration: InputDecoration(labelText: '새 메모 내용'),
+                    decoration: const InputDecoration(labelText: '새 메모 내용'),
                     onChanged: (value) => _updateMemoContent = value,
                   ),
                   ElevatedButton(
                     onPressed: _updateMemo,
-                    child: Text('메모 수정'),
+                    child: const Text('메모 수정'),
                   ),
                   TextField(
-                    decoration: InputDecoration(labelText: '삭제할 메모 ID'),
+                    decoration: const InputDecoration(labelText: '삭제할 메모 ID'),
                     onChanged: (value) => _deleteMemoId = value,
                   ),
                   ElevatedButton(
                     onPressed: _deleteMemo,
-                    child: Text('메모 삭제'),
+                    child: const Text('메모 삭제'),
                   ),
                   TextField(
-                    decoration: InputDecoration(labelText: '검색할 User ID 입력'),
+                    decoration: const InputDecoration(labelText: '검색할 User ID 입력'),
                     onChanged: (value) => _searchUserId = value,
                   ),
                   ElevatedButton(
                     onPressed: _fetchUserById,
-                    child: Text('User 정보 가져오기'),
+                    child: const Text('User 정보 가져오기'),
                   ),
                   if (_searchedUserNickname.isNotEmpty) ...[
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     CircleAvatar(
                       backgroundImage: NetworkImage(_profileImageUrl),
                       radius: 40,
@@ -233,7 +236,7 @@ class _HomePageState extends State<HomePage> {
                   ],
                   ElevatedButton(
                     onPressed: _fetchMemosByUserId,
-                    child: Text('User의 모든 메모 가져오기'),
+                    child: const Text('User의 모든 메모 가져오기'),
                   ),
                   if (_searchedMemos.isNotEmpty)
                     Column(
@@ -248,7 +251,7 @@ class _HomePageState extends State<HomePage> {
                                 Text(memo['date']),
                                 Text(
                                   'ID: ${memo['memoId']}',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                       fontSize: 12, color: Colors.grey),
                                 ),
                               ],
@@ -258,7 +261,7 @@ class _HomePageState extends State<HomePage> {
                       }).toList(),
                     ),
                   if (_searchedMemos.isEmpty && _searchUserId.isNotEmpty)
-                    Text('메모가 없습니다.'),
+                    const Text('메모가 없습니다.'),
                 ],
               ),
             ),
