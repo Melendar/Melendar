@@ -8,6 +8,7 @@ import 'service/memo_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  print("Firebase 초기화 완료");
   runApp(MyApp());
 }
 
@@ -27,13 +28,11 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-// 상태 관리를 위한 클래스
 class _HomePageState extends State<HomePage> {
   User? _user;
   String _nickname = '';
   String _profileImageUrl = '';
   String _newNickname = '';
-  String _newProfileImageUrl = '';
   String _memoTitle = '';
   String _memoContent = '';
   String _updateMemoId = '';
@@ -45,61 +44,81 @@ class _HomePageState extends State<HomePage> {
   String _searchedUserProfileImage = '';
   List<Map<String, dynamic>> _searchedMemos = [];
 
-  // 구글 로그인 자동 실행
   @override
   void initState() {
     super.initState();
     _signInWithGoogle();
   }
 
-  // 구글 로그인
   Future<void> _signInWithGoogle() async {
-    await signInWithGoogle();
-    setState(() => _user = FirebaseAuth.instance.currentUser);
-    await _handleUserInFirestore();
+  print("Google 로그인 시작");
+  await signInWithGoogle();
+
+  // 현재 로그인된 사용자 정보를 변수로 저장
+  User? currentUser = FirebaseAuth.instance.currentUser;
+  if (currentUser == null) {
+    print("로그인 실패: 사용자 정보가 없습니다.");
+    return;
   }
 
+  setState(() {
+    _user = currentUser;
+  });
+
+  print("FirebaseAuth 사용자 정보: UID - ${_user?.uid}, 이메일 - ${_user?.email}");
+
+  // Firestore에서 사용자 정보 처리
+  await _handleUserInFirestore();
+}
   Future<void> _handleUserInFirestore() async {
+    print("Firestore에서 사용자 정보 처리 시작");
     await handleUserInFirestore((nickname, profileImageUrl) {
       setState(() {
         _nickname = nickname;
         _profileImageUrl = profileImageUrl;
+        print("Firestore 사용자 정보 업데이트 완료: 닉네임 - $_nickname, 프로필 이미지 - $_profileImageUrl");
       });
     });
   }
 
   Future<void> _fetchUserById() async {
-    await fetchUserById(_searchUserId, (nickname, profileImageUrl) {
+    try {
+      print("사용자 정보 가져오기 시작: User ID - $_searchUserId");
+      final userData = await fetchUserById(_searchUserId);
+      final nickname = userData['nickname'] ?? 'Anonymous';
+      final profileImageUrl = userData['profileImage'] ?? '';
+
       setState(() {
         _searchedUserNickname = nickname;
         _searchedUserProfileImage = profileImageUrl;
+        print("사용자 정보 가져오기 완료: 닉네임 - $_searchedUserNickname, 프로필 이미지 - $_searchedUserProfileImage");
       });
-    });
+    } catch (e) {
+      print("사용자 정보 가져오기 오류: $e");
+    }
   }
 
   Future<void> _updateNickname() async {
+    print("닉네임 업데이트 시작: $_newNickname");
     await updateNickname(_newNickname, (nickname) {
-      setState(() => _nickname = nickname);
+      setState(() {
+        _nickname = nickname;
+        print("닉네임 업데이트 완료: $_nickname");
+      });
     });
   }
 
   Future<void> _updateProfileImage() async {
     try {
-      print("프로필 이미지 변경 시작");
-
-      // Firebase Storage로 이미지 업로드 및 Firestore 업데이트
+      print("프로필 이미지 업데이트 시작");
       await updateProfileImage((downloadUrl) {
         if (downloadUrl.isNotEmpty) {
-          print("Firestore에 업데이트된 프로필 이미지 URL: $downloadUrl");
-
-          // UI 업데이트
           setState(() {
             _profileImageUrl = downloadUrl;
           });
-
-          print("UI 업데이트 완료");
+          print("프로필 이미지 업데이트 완료: $_profileImageUrl");
         } else {
-          print("다운로드 URL이 비어있습니다.");
+          print("이미지 업로드 실패 또는 다운로드 URL이 비어있음");
         }
       });
     } catch (e) {
@@ -108,21 +127,30 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _createMemo() async {
+    print("메모 생성 시작");
     await createMemo(_user!.uid, _memoTitle, _memoContent);
+    print("메모 생성 완료");
   }
 
   Future<void> _updateMemo() async {
-    await updateMemo(
-        _user!.uid, _updateMemoId, _updateMemoTitle, _updateMemoContent);
+    print("메모 수정 시작: ID - $_updateMemoId");
+    await updateMemo(_user!.uid, _updateMemoId, _updateMemoTitle, _updateMemoContent);
+    print("메모 수정 완료");
   }
 
   Future<void> _deleteMemo() async {
+    print("메모 삭제 시작: ID - $_deleteMemoId");
     await deleteMemo(_user!.uid, _deleteMemoId);
+    print("메모 삭제 완료");
   }
 
   Future<void> _fetchMemosByUserId() async {
+    print("User의 모든 메모 가져오기 시작: User ID - $_searchUserId");
     await fetchMemosByUserId(_searchUserId, (memos) {
-      setState(() => _searchedMemos = memos);
+      setState(() {
+        _searchedMemos = memos;
+        print("메모 가져오기 완료: ${_searchedMemos.length}개 메모 발견");
+      });
     });
   }
 
@@ -139,7 +167,9 @@ class _HomePageState extends State<HomePage> {
               child: Column(
                 children: [
                   CircleAvatar(
-                    backgroundImage: NetworkImage(_profileImageUrl),
+                    backgroundImage: NetworkImage(
+                      '$_profileImageUrl?timestamp=${DateTime.now().millisecondsSinceEpoch}',
+                    ),
                     radius: 40,
                   ),
                   SizedBox(height: 16),
@@ -152,27 +182,8 @@ class _HomePageState extends State<HomePage> {
                     onPressed: _updateNickname,
                     child: Text('닉네임 변경'),
                   ),
-                  TextField(
-                    decoration: InputDecoration(labelText: '새 프로필 이미지 URL'),
-                    onChanged: (value) => _newProfileImageUrl = value,
-                  ),
                   ElevatedButton(
-                    onPressed: () async {
-                      print("프로필 이미지 변경 버튼 클릭됨");
-
-                      // 이미지 업로드 및 Firestore 업데이트
-                      await updateProfileImage((downloadUrl) {
-                        if (downloadUrl.isNotEmpty) {
-                          // UI 업데이트
-                          setState(() {
-                            _profileImageUrl = downloadUrl;
-                          });
-                          print("UI 업데이트 완료: $_profileImageUrl");
-                        } else {
-                          print("이미지 업로드 실패 또는 다운로드 URL이 비어있음");
-                        }
-                      });
-                    },
+                    onPressed: _updateProfileImage,
                     child: Text('프로필 이미지 변경'),
                   ),
                   TextField(
@@ -188,48 +199,50 @@ class _HomePageState extends State<HomePage> {
                     child: Text('메모 생성'),
                   ),
                   TextField(
-                    decoration: InputDecoration(labelText: '수정할 메모 ID'),
+                    decoration: const InputDecoration(labelText: '수정할 메모 ID'),
                     onChanged: (value) => _updateMemoId = value,
                   ),
                   TextField(
-                    decoration: InputDecoration(labelText: '새 메모 제목'),
+                    decoration: const InputDecoration(labelText: '새 메모 제목'),
                     onChanged: (value) => _updateMemoTitle = value,
                   ),
                   TextField(
-                    decoration: InputDecoration(labelText: '새 메모 내용'),
+                    decoration: const InputDecoration(labelText: '새 메모 내용'),
                     onChanged: (value) => _updateMemoContent = value,
                   ),
                   ElevatedButton(
                     onPressed: _updateMemo,
-                    child: Text('메모 수정'),
+                    child: const Text('메모 수정'),
                   ),
                   TextField(
-                    decoration: InputDecoration(labelText: '삭제할 메모 ID'),
+                    decoration: const InputDecoration(labelText: '삭제할 메모 ID'),
                     onChanged: (value) => _deleteMemoId = value,
                   ),
                   ElevatedButton(
                     onPressed: _deleteMemo,
-                    child: Text('메모 삭제'),
+                    child: const Text('메모 삭제'),
                   ),
                   TextField(
-                    decoration: InputDecoration(labelText: '검색할 User ID 입력'),
+                    decoration: const InputDecoration(labelText: '검색할 User ID 입력'),
                     onChanged: (value) => _searchUserId = value,
                   ),
                   ElevatedButton(
                     onPressed: _fetchUserById,
-                    child: Text('User 정보 가져오기'),
+                    child: const Text('User 정보 가져오기'),
                   ),
                   if (_searchedUserNickname.isNotEmpty) ...[
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     CircleAvatar(
-                      backgroundImage: NetworkImage(_profileImageUrl),
-                      radius: 40,
+                    backgroundImage: NetworkImage(
+                      '$_searchedUserProfileImage?timestamp=${DateTime.now().millisecondsSinceEpoch}',
                     ),
+                    radius: 40,
+                  ),
                     Text('닉네임: $_searchedUserNickname'),
                   ],
                   ElevatedButton(
                     onPressed: _fetchMemosByUserId,
-                    child: Text('User의 모든 메모 가져오기'),
+                    child: const Text('User의 모든 메모 가져오기'),
                   ),
                   if (_searchedMemos.isNotEmpty)
                     Column(
@@ -244,7 +257,7 @@ class _HomePageState extends State<HomePage> {
                                 Text(memo['date']),
                                 Text(
                                   'ID: ${memo['memoId']}',
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                       fontSize: 12, color: Colors.grey),
                                 ),
                               ],
@@ -254,7 +267,7 @@ class _HomePageState extends State<HomePage> {
                       }).toList(),
                     ),
                   if (_searchedMemos.isEmpty && _searchUserId.isNotEmpty)
-                    Text('메모가 없습니다.'),
+                    const Text('메모가 없습니다.'),
                 ],
               ),
             ),
