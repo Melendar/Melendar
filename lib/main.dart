@@ -4,6 +4,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
 import 'service/user_service.dart';
 import 'service/memo_service.dart';
+import 'service/group_service.dart';
+import 'service/event_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -153,17 +155,18 @@ class _HomePageState extends State<HomePage> {
       });
     });
   }
+  
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Firestore Memo App'),
+        title: const Text('Firestore Memo App'),
       ),
       body: _user == null
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
                   CircleAvatar(
@@ -172,31 +175,31 @@ class _HomePageState extends State<HomePage> {
                     ),
                     radius: 40,
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Text('닉네임: $_nickname'),
                   TextField(
-                    decoration: InputDecoration(labelText: '새 닉네임'),
+                    decoration: const InputDecoration(labelText: '새 닉네임'),
                     onChanged: (value) => _newNickname = value,
                   ),
                   ElevatedButton(
                     onPressed: _updateNickname,
-                    child: Text('닉네임 변경'),
+                    child: const Text('닉네임 변경'),
                   ),
                   ElevatedButton(
                     onPressed: _updateProfileImage,
                     child: Text('프로필 이미지 변경'),
                   ),
                   TextField(
-                    decoration: InputDecoration(labelText: '메모 제목'),
+                    decoration: const InputDecoration(labelText: '메모 제목'),
                     onChanged: (value) => _memoTitle = value,
                   ),
                   TextField(
-                    decoration: InputDecoration(labelText: '메모 내용'),
+                    decoration: const InputDecoration(labelText: '메모 내용'),
                     onChanged: (value) => _memoContent = value,
                   ),
                   ElevatedButton(
                     onPressed: _createMemo,
-                    child: Text('메모 생성'),
+                    child: const Text('메모 생성'),
                   ),
                   TextField(
                     decoration: const InputDecoration(labelText: '수정할 메모 ID'),
