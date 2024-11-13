@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/firebase_options.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'calendar/calendar.dart';
 import 'group/screens/group_list_screen.dart';
 import 'note/Memo.dart'; // 메모 화면 import
 import 'Profile.dart'; // 프로필 페이지 import
+import 'package:firebase_core/firebase_core.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   await initializeDateFormatting('ko', ''); // 날짜 형식 초기화
-  //await Firebase.initializeApp(); // Firebase 초기화
-
   runApp(const MyApp());
 }
 
@@ -19,12 +22,29 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'melender',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const GoogleBottomBar(),
+    return FutureBuilder(
+      future: Firebase.initializeApp(), // Firebase 초기화
+      builder: (context, snapshot) {
+        // Firebase 초기화 완료 상태 확인
+        if (snapshot.connectionState == ConnectionState.done) {
+          return MaterialApp(
+            title: 'melender',
+            theme: ThemeData(
+              primarySwatch: Colors.blue,
+            ),
+            home: const GoogleBottomBar(),
+          );
+        }
+
+        // 초기화가 진행 중일 때 로딩 화면 표시
+        return const MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          ),
+        );
+      },
     );
   }
 }

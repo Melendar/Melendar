@@ -1,7 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class MemoEditScreen extends StatefulWidget {
-  const MemoEditScreen({Key? key}) : super(key: key);
+  final String? memoId; // memoId를 전달받아 기존 메모인지 새 메모인지 구분
+
+  const MemoEditScreen({Key? key, this.memoId}) : super(key: key);
 
   @override
   _MemoEditScreenState createState() => _MemoEditScreenState();
@@ -10,102 +14,109 @@ class MemoEditScreen extends StatefulWidget {
 class _MemoEditScreenState extends State<MemoEditScreen> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _contentController = TextEditingController();
-  final FocusNode _titleFocusNode = FocusNode();
-  final FocusNode _contentFocusNode = FocusNode();
+  bool _isLoading = false;
 
   @override
-  void dispose() {
-    _titleController.dispose();
-    _contentController.dispose();
-    _titleFocusNode.dispose();
-    _contentFocusNode.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    if (widget.memoId != null) {
+      _loadMemo();
+    }
+  }
+
+  // 메모 불러오기 (수정 시)
+  Future<void> _loadMemo() async {
+    setState(() {
+      _isLoading = true;
+    });
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null && widget.memoId != null) {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('memos')
+          .doc(widget.memoId)
+          .get();
+
+      if (doc.exists) {
+        final data = doc.data()!;
+        _titleController.text = data['title'] ?? '';
+        _contentController.text = data['content'] ?? '';
+      }
+    }
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _saveMemo() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final title = _titleController.text.trim();
+      final content = _contentController.text.trim();
+
+      if (widget.memoId == null) {
+        // 새 메모 작성
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('memos')
+            .add({
+          'title': title,
+          'content': content,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+      } else {
+        // 기존 메모 수정
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('memos')
+            .doc(widget.memoId)
+            .update({
+          'title': title,
+          'content': content,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+      }
+
+      Navigator.pop(context);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        // 화면 아무 곳이나 탭하면 모든 포커스를 해제하고 키보드를 숨김
-        _titleFocusNode.unfocus();
-        _contentFocusNode.unfocus();
-      },
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('메모 작성', style: TextStyle(color: Colors.black)),
-          backgroundColor: Colors.white,
-          elevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black),
-            onPressed: () => Navigator.of(context).pop(),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('메모 작성'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.save),
+            onPressed: _saveMemo,
           ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: () {
-                // 삭제 기능 구현 필요
-              },
-            ),
-            TextButton(
-              onPressed: () {
-                final title = _titleController.text.trim();
-                final content = _contentController.text.trim();
-
-                Navigator.pop(context, {'제목': title, '내용': content});
-              },
-              child: const Text(
-                '완료',
-                style: TextStyle(color: Colors.blue),
+        ],
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _titleController,
+              decoration: const InputDecoration(
+                hintText: '제목을 입력해주세요',
               ),
             ),
+            const SizedBox(height: 16.0),
+            TextField(
+              controller: _contentController,
+              decoration: const InputDecoration(
+                hintText: '내용을 입력해주세요',
+              ),
+              maxLines: null,
+            ),
           ],
-        ),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(12.0),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  controller: _titleController,
-                  focusNode: _titleFocusNode, // 제목 필드에 포커스 노드 추가
-                  decoration: const InputDecoration(
-                    hintText: '제목을 입력해주세요',
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                  ),
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  textInputAction: TextInputAction.next,
-                ),
-                const Divider(
-                  color: Colors.grey,
-                  thickness: 1,
-                  indent: 16,
-                  endIndent: 16,
-                ),
-                Expanded(
-                  child: TextField(
-                    controller: _contentController,
-                    focusNode: _contentFocusNode, // 내용 필드에 포커스 노드 추가
-                    decoration: const InputDecoration(
-                      hintText: '내용을 입력해주세요',
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                    ),
-                    style: const TextStyle(fontSize: 18),
-                    keyboardType: TextInputType.multiline,
-                    maxLines: null,
-                    expands: true,
-                    textAlignVertical: TextAlignVertical.top,
-                  ),
-                ),
-              ],
-            ),
-          ),
         ),
       ),
     );
