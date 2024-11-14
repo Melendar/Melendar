@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'firebase_options.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'service/user_service.dart';
 import 'service/memo_service.dart';
 import 'service/group_service.dart';
@@ -20,7 +21,104 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Firestore Memo App',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: HomePage(),
+      home: SignInPage(),
+    );
+  }
+}
+
+final GoogleSignIn _googleSignIn = GoogleSignIn(
+  scopes: [
+    'email',
+    'https://www.googleapis.com/auth/userinfo.profile',
+  ],
+);
+
+class SignInPage extends StatelessWidget {
+  const SignInPage({Key? key}) : super(key: key);
+
+  Future<void> _signIn(BuildContext context) async {
+  try {
+    print("Google 로그인 시작");
+
+    // Google 로그아웃 시도
+    await _googleSignIn.signOut();
+
+    final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+    if (googleUser == null) {
+      print("로그인 취소됨");
+      return;
+    }
+
+    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+    final AuthCredential credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+
+    final UserCredential userCredential =
+        await FirebaseAuth.instance.signInWithCredential(credential);
+    User? currentUser = userCredential.user;
+
+    if (currentUser != null) {
+      print("로그인 성공: UID - ${currentUser.uid}");
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => HomePage()),
+      );
+    } else {
+      print("로그인 실패: 사용자 정보가 없습니다.");
+    }
+  } catch (e) {
+    print("Google 로그인 오류: $e");
+  }
+}
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFB3E5FC),
+              Color(0xFFE1F5FE),
+            ],
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              'MELENDAR',
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () => _signIn(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: const Text(
+                'Sign in',
+                style: TextStyle(fontSize: 18),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -46,31 +144,43 @@ class _HomePageState extends State<HomePage> {
   String _searchedUserProfileImage = '';
   List<Map<String, dynamic>> _searchedMemos = [];
 
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
+
   @override
   void initState() {
     super.initState();
-    _signInWithGoogle();
+    _initializeUser();
   }
 
-  Future<void> _signInWithGoogle() async {
-  print("Google 로그인 시작");
-  await signInWithGoogle();
-
-  // 현재 로그인된 사용자 정보를 변수로 저장
-  User? currentUser = FirebaseAuth.instance.currentUser;
-  if (currentUser == null) {
-    print("로그인 실패: 사용자 정보가 없습니다.");
-    return;
+  Future<void> _initializeUser() async {
+    User? currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      setState(() {
+        _user = currentUser;
+      });
+      await _handleUserInFirestore();
+    }
   }
 
-  setState(() {
-    _user = currentUser;
-  });
+  Future<void> _signOut(BuildContext context) async {
+  try {
+    // FirebaseAuth 로그아웃
+    await FirebaseAuth.instance.signOut();
 
-  print("FirebaseAuth 사용자 정보: UID - ${_user?.uid}, 이메일 - ${_user?.email}");
+    // Google 계정 로그아웃 (세션 해제)
+    await _googleSignIn.disconnect();
+    await _googleSignIn.signOut();
 
-  // Firestore에서 사용자 정보 처리
-  await _handleUserInFirestore();
+    print("로그아웃 완료");
+
+    // 로그아웃 후 SignInPage로 이동
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => SignInPage()),
+    );
+  } catch (e) {
+    print("로그아웃 오류: $e");
+  }
 }
   Future<void> _handleUserInFirestore() async {
     print("Firestore에서 사용자 정보 처리 시작");
@@ -78,7 +188,8 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         _nickname = nickname;
         _profileImageUrl = profileImageUrl;
-        print("Firestore 사용자 정보 업데이트 완료: 닉네임 - $_nickname, 프로필 이미지 - $_profileImageUrl");
+        print(
+            "Firestore 사용자 정보 업데이트 완료: 닉네임 - $_nickname, 프로필 이미지 - $_profileImageUrl");
       });
     });
   }
@@ -93,7 +204,8 @@ class _HomePageState extends State<HomePage> {
       setState(() {
         _searchedUserNickname = nickname;
         _searchedUserProfileImage = profileImageUrl;
-        print("사용자 정보 가져오기 완료: 닉네임 - $_searchedUserNickname, 프로필 이미지 - $_searchedUserProfileImage");
+        print(
+            "사용자 정보 가져오기 완료: 닉네임 - $_searchedUserNickname, 프로필 이미지 - $_searchedUserProfileImage");
       });
     } catch (e) {
       print("사용자 정보 가져오기 오류: $e");
@@ -136,7 +248,8 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _updateMemo() async {
     print("메모 수정 시작: ID - $_updateMemoId");
-    await updateMemo(_user!.uid, _updateMemoId, _updateMemoTitle, _updateMemoContent);
+    await updateMemo(
+        _user!.uid, _updateMemoId, _updateMemoTitle, _updateMemoContent);
     print("메모 수정 완료");
   }
 
@@ -155,7 +268,6 @@ class _HomePageState extends State<HomePage> {
       });
     });
   }
-  
 
   @override
   Widget build(BuildContext context) {
@@ -226,7 +338,8 @@ class _HomePageState extends State<HomePage> {
                     child: const Text('메모 삭제'),
                   ),
                   TextField(
-                    decoration: const InputDecoration(labelText: '검색할 User ID 입력'),
+                    decoration:
+                        const InputDecoration(labelText: '검색할 User ID 입력'),
                     onChanged: (value) => _searchUserId = value,
                   ),
                   ElevatedButton(
@@ -236,11 +349,11 @@ class _HomePageState extends State<HomePage> {
                   if (_searchedUserNickname.isNotEmpty) ...[
                     const SizedBox(height: 16),
                     CircleAvatar(
-                    backgroundImage: NetworkImage(
-                      '$_searchedUserProfileImage?timestamp=${DateTime.now().millisecondsSinceEpoch}',
+                      backgroundImage: NetworkImage(
+                        '$_searchedUserProfileImage?timestamp=${DateTime.now().millisecondsSinceEpoch}',
+                      ),
+                      radius: 40,
                     ),
-                    radius: 40,
-                  ),
                     Text('닉네임: $_searchedUserNickname'),
                   ],
                   ElevatedButton(
@@ -271,6 +384,23 @@ class _HomePageState extends State<HomePage> {
                     ),
                   if (_searchedMemos.isEmpty && _searchUserId.isNotEmpty)
                     const Text('메모가 없습니다.'),
+                  const SizedBox(height: 20),
+                  // 로그아웃 버튼 추가
+                  ElevatedButton(
+                    onPressed: () => _signOut(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.redAccent,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    child: const Text(
+                      'Log out',
+                      style: TextStyle(fontSize: 18),
+                    ),
+                  ),
                 ],
               ),
             ),
