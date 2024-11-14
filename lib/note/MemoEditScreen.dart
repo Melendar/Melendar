@@ -1,11 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-class MemoEditScreen extends StatefulWidget {
-  final String? memoId; // memoId를 전달받아 기존 메모인지 새 메모인지 구분
+final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  const MemoEditScreen({Key? key, this.memoId}) : super(key: key);
+class MemoEditScreen extends StatefulWidget {
+  final String? memoId; // memoId를 통해 기존 메모인지 새 메모인지 구분
+  final String userId;  // userId를 전달받아 메모 저장
+
+  const MemoEditScreen({Key? key, this.memoId, required this.userId}) : super(key: key);
 
   @override
   _MemoEditScreenState createState() => _MemoEditScreenState();
@@ -29,12 +31,12 @@ class _MemoEditScreenState extends State<MemoEditScreen> {
     setState(() {
       _isLoading = true;
     });
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null && widget.memoId != null) {
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection('memos')
+
+    if (widget.memoId != null) {
+      final doc = await _firestore
+          .collection('Users')
+          .doc(widget.userId)   // 전달받은 userId 사용
+          .collection('Memos')
           .doc(widget.memoId)
           .get();
 
@@ -44,44 +46,43 @@ class _MemoEditScreenState extends State<MemoEditScreen> {
         _contentController.text = data['content'] ?? '';
       }
     }
+
     setState(() {
       _isLoading = false;
     });
   }
 
+  // 메모 저장
   Future<void> _saveMemo() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      final title = _titleController.text.trim();
-      final content = _contentController.text.trim();
+    final title = _titleController.text.trim();
+    final content = _contentController.text.trim();
 
-      if (widget.memoId == null) {
-        // 새 메모 작성
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .collection('memos')
-            .add({
-          'title': title,
-          'content': content,
-          'timestamp': FieldValue.serverTimestamp(),
-        });
-      } else {
-        // 기존 메모 수정
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .collection('memos')
-            .doc(widget.memoId)
-            .update({
-          'title': title,
-          'content': content,
-          'timestamp': FieldValue.serverTimestamp(),
-        });
-      }
-
-      Navigator.pop(context);
+    if (widget.memoId == null) {
+      // 새 메모 작성
+      await _firestore
+          .collection('Users')
+          .doc(widget.userId)   // 전달받은 userId 사용
+          .collection('Memos')
+          .add({
+        'title': title,
+        'content': content,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+    } else {
+      // 기존 메모 수정
+      await _firestore
+          .collection('Users')
+          .doc(widget.userId)   // 전달받은 userId 사용
+          .collection('Memos')
+          .doc(widget.memoId)
+          .update({
+        'title': title,
+        'content': content,
+        'timestamp': FieldValue.serverTimestamp(),
+      });
     }
+
+    Navigator.pop(context);
   }
 
   @override

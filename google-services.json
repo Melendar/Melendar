@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "863247481680",
+    "project_id": "melendar-29396",
+    "storage_bucket": "melendar-29396.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:863247481680:android:bbfdd6740d06b285afca55",
+        "android_client_info": {
+          "package_name": "com.example.melendar_back"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "863247481680-vi4uuasj8m4de059ugm8kbnep19dm441.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyALE0dTTBKxxenK15dxWlR_Ur9wZ290Zto"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "863247481680-vi4uuasj8m4de059ugm8kbnep19dm441.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "863247481680-6gqme03o7ur7k9nr5eenlhqar608ritp.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.melendarBack"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

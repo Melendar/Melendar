@@ -31,7 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  firebase_core: ^3.7.0
+  firebase_core: ^3.8.0
   cloud_firestore: ^5.4.4
   firebase_auth: ^5.3.2
   image_picker: ^0.8.7+3
@@ -39,6 +39,9 @@ dependencies:
   google_fonts: ^4.0.0  # 최신 버전을 사용하는 것이 좋습니다.
   intl: ^0.18.0  # 최신 버전 확인 권장
   calendar_view: ^1.2.0
+  google_sign_in: ^6.1.4
+  firebase_storage: ^12.3.5
+  file_picker: ^5.2.6
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
