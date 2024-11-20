@@ -13,6 +13,8 @@ import 'user_provider.dart';
 import 'login_page.dart';
 import 'home_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'sign_in_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,59 +26,18 @@ void main() async {
   runApp(
     ChangeNotifierProvider(
       create: (context) => UserProvider(),
-      child: const MyApp(),
+      child: MyApp(),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: Firebase.initializeApp(), // Firebase 초기화
-      builder: (context, snapshot) {
-        // Firebase 초기화 완료 상태 확인
-        if (snapshot.connectionState == ConnectionState.done) {
-          return MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'melender',
-            theme: ThemeData(
-              primarySwatch: Colors.blue,
-            ),
-            home: StreamBuilder<User?>(
-              stream: FirebaseAuth.instance.authStateChanges(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.active) {
-                  User? user = snapshot.data;
-                  if (user == null) {
-                    return LoginPage();
-                  }
-                  Provider.of<UserProvider>(context, listen: false)
-                      .setUser(user);
-                  return HomePage();
-                }
-                //초기화중일때 로딩화면 표시
-                return const Scaffold(
-                  body: Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                );
-              },
-            ),
-          );
-        }
-
-        // 초기화가 진행 중일 때 로딩 화면 표시
-        return const MaterialApp(
-          home: Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
-          ),
-        );
-      },
+    return MaterialApp(
+      title: 'Melendar',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: SignInPage(),
     );
   }
 }
