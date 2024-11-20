@@ -14,6 +14,58 @@
       },
       "oauth_client": [
         {
+          "client_id": "863247481680-iv0uti8nv8frv92lgv4rk85herle7s95.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.melendar_back",
+            "certificate_hash": "4ac9d61a47a5934bb5032ea86cc0705c7eeb70a9"
+          }
+        },
+        {
+          "client_id": "863247481680-vi4uuasj8m4de059ugm8kbnep19dm441.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyALE0dTTBKxxenK15dxWlR_Ur9wZ290Zto"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "863247481680-vi4uuasj8m4de059ugm8kbnep19dm441.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "863247481680-6gqme03o7ur7k9nr5eenlhqar608ritp.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.melendarBack"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:863247481680:android:e68fbd1a30b29011afca55",
+        "android_client_info": {
+          "package_name": "com.example.mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "863247481680-4la8l6eud5fddbrj5rmvq0jcmikvcjcg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.mobile",
+            "certificate_hash": "4ac9d61a47a5934bb5032ea86cc0705c7eeb70a9"
+          }
+        },
+        {
           "client_id": "863247481680-vi4uuasj8m4de059ugm8kbnep19dm441.apps.googleusercontent.com",
           "client_type": 3
         }
