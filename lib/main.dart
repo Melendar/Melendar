@@ -8,6 +8,11 @@ import 'note/Memo.dart'; // 메모 화면 import
 import 'Profile.dart'; // 프로필 페이지 import
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:provider/provider.dart';
+import 'user_provider.dart';
+import 'login_page.dart';
+import 'home_page.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,7 +20,13 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   await initializeDateFormatting('ko', ''); // 날짜 형식 초기화
-  runApp(const MyApp());
+  // Provider 사용
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => UserProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -29,11 +40,31 @@ class MyApp extends StatelessWidget {
         // Firebase 초기화 완료 상태 확인
         if (snapshot.connectionState == ConnectionState.done) {
           return MaterialApp(
+            debugShowCheckedModeBanner: false,
             title: 'melender',
             theme: ThemeData(
               primarySwatch: Colors.blue,
             ),
-            home: const GoogleBottomBar(),
+            home: StreamBuilder<User?>(
+              stream: FirebaseAuth.instance.authStateChanges(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.active) {
+                  User? user = snapshot.data;
+                  if (user == null) {
+                    return LoginPage();
+                  }
+                  Provider.of<UserProvider>(context, listen: false)
+                      .setUser(user);
+                  return HomePage();
+                }
+                //초기화중일때 로딩화면 표시
+                return const Scaffold(
+                  body: Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+              },
+            ),
           );
         }
 
@@ -49,62 +80,3 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
-class GoogleBottomBar extends StatefulWidget {
-  const GoogleBottomBar({Key? key}) : super(key: key);
-
-  @override
-  State<GoogleBottomBar> createState() => _GoogleBottomBarState();
-}
-
-class _GoogleBottomBarState extends State<GoogleBottomBar> {
-  int _selectedIndex = 0;
-
-  // 각 네비게이션 탭에 연결된 페이지
-  final List<Widget> _pages = [
-    const Calendar(),
-    const Note(), // 메모 화면
-    GroupListScreen(),
-    RegistProfile(), // 프로필 페이지
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: _pages[_selectedIndex], // 선택된 페이지 표시
-      bottomNavigationBar: SalomonBottomBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        items: _navBarItems,
-      ),
-    );
-  }
-}
-
-// SalomonBottomBar 아이템 정의
-final _navBarItems = [
-  SalomonBottomBarItem(
-    icon: const Icon(Icons.calendar_today_outlined),
-    title: const Text("캘린더"),
-    selectedColor: Colors.purple,
-  ),
-  SalomonBottomBarItem(
-    icon: const Icon(Icons.note),
-    title: const Text("메모"),
-    selectedColor: Colors.blueAccent,
-  ),
-  SalomonBottomBarItem(
-    icon: const Icon(Icons.group_outlined),
-    title: const Text("그룹"),
-    selectedColor: Colors.orange,
-  ),
-  SalomonBottomBarItem(
-    icon: const Icon(Icons.person),
-    title: const Text("내 정보"),
-    selectedColor: Colors.blueGrey,
-  ),
-];
