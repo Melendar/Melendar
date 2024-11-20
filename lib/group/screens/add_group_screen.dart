@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../services/group_service.dart'; // 프로젝트 구조에 맞게 import 경로 조정
+import '../../service/group_service.dart'; // 프로젝트 구조에 맞게 import 경로 조정
 
 class AddGroupScreen extends StatefulWidget {
   @override

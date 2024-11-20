@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'user_provider.dart';
 import 'home_page.dart';
+import 'service/group_service.dart';
 
 class SignInPage extends StatelessWidget {
   SignInPage({Key? key}) : super(key: key);
@@ -28,7 +29,8 @@ class SignInPage extends StatelessWidget {
         return;
       }
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
       final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
@@ -40,11 +42,16 @@ class SignInPage extends StatelessWidget {
 
       if (currentUser != null) {
         print("로그인 성공: UID - ${currentUser.uid}");
-        // authStateChanges()가 알아서 페이지 바꿈
-        // Navigator.pushReplacement(
-        //   context,
-        //   MaterialPageRoute(builder: (context) => const HomePage()),
-        // );
+
+        final groupService = GroupService();
+        // 처음 들어오는 유저면 개인그룹 생성. isNewUser는 파베 제공값. 조건문 : 좌측 조건이 null 이거나 false면 false 반환
+        if (userCredential.additionalUserInfo?.isNewUser ?? false) {
+          await groupService.createPersonalGroup(currentUser.uid);
+        }
+        // 그룹 정보 가져와서 저장
+        List<Map<String, dynamic>> userGroups = await groupService.getGroupsByUser(currentUser.uid);
+        Provider.of<UserProvider>(context, listen: false).setGroups(userGroups);
+        
       } else {
         print("로그인 실패: 사용자 정보가 없습니다.");
       }
@@ -96,7 +103,8 @@ class SignInPage extends StatelessWidget {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white,
                               foregroundColor: Colors.black,
-                              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 40, vertical: 15),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(20),
                               ),
@@ -104,7 +112,7 @@ class SignInPage extends StatelessWidget {
                             child: const Text(
                               'Sign in',
                               style: TextStyle(fontSize: 18),
-                            ),  
+                            ),
                           ),
                         ],
                       ),

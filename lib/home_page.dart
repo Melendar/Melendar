@@ -31,21 +31,6 @@ class _HomePageState extends State<HomePage> {
     final userProvider = Provider.of<UserProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'userProvider.nickname값 ${userProvider.nickname}',
-          style: TextStyle(fontSize: 16),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.exit_to_app),
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-              userProvider.clearUser();
-            },
-          ),
-        ],
-      ),
       body: _pages[_selectedIndex], // 선택된 페이지 표시
       bottomNavigationBar: SalomonBottomBar(
         currentIndex: _selectedIndex,
