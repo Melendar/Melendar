@@ -1,6 +1,8 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'service/user_service.dart';
+import 'main.dart';
 
 class RegistProfile extends StatefulWidget {
   @override
@@ -8,135 +10,172 @@ class RegistProfile extends StatefulWidget {
 }
 
 class Profile extends State<RegistProfile> {
-  XFile? _imageFile; // 카메라/갤러리에서 사진 가져올 때 사용함 (image_picker)
-  final ImagePicker _picker = ImagePicker();
+  User? _user;
+  String _nickname = '';
+  String _profileImageUrl = '';
+  String _newNickname = '';
+  String _searchUserId = '';
+  String _searchedUserNickname = '';
+  String _searchedUserProfileImage = '';
 
-  static const Color secondaryTextColor = Colors.blue;
-  static const Color primaryTextColor = Colors.black;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeUser();
+  }
+
+  Future<void> _initializeUser() async {
+    User? currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      setState(() {
+        _user = currentUser;
+      });
+      await _handleUserInFirestore();
+    }
+  }
+
+  Future<void> _signOut(BuildContext context) async {
+    try {
+      // FirebaseAuth 로그아웃
+      await FirebaseAuth.instance.signOut();
+
+      // Google 계정 로그아웃 (세션 해제)
+      await _googleSignIn.disconnect();
+      await _googleSignIn.signOut();
+
+      print("로그아웃 완료");
+
+      // 로그아웃 후 SignInPage로 이동
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => SignInPage()),
+      );
+    } catch (e) {
+      print("로그아웃 오류: $e");
+    }
+  }
+
+  Future<void> _handleUserInFirestore() async {
+    print("Firestore에서 사용자 정보 처리 시작");
+    await handleUserInFirestore((nickname, profileImageUrl) {
+      setState(() {
+        _nickname = nickname;
+        _profileImageUrl = profileImageUrl;
+        print(
+            "Firestore 사용자 정보 업데이트 완료: 닉네임 - $_nickname, 프로필 이미지 - $_profileImageUrl");
+      });
+    });
+  }
+
+  Future<void> _fetchUserById() async {
+    try {
+      print("사용자 정보 가져오기 시작: User ID - $_searchUserId");
+      final userData = await fetchUserById(_searchUserId);
+      final nickname = userData['nickname'] ?? 'Anonymous';
+      final profileImageUrl = userData['profileImage'] ?? '';
+
+      setState(() {
+        _searchedUserNickname = nickname;
+        _searchedUserProfileImage = profileImageUrl;
+        print(
+            "사용자 정보 가져오기 완료: 닉네임 - $_searchedUserNickname, 프로필 이미지 - $_searchedUserProfileImage");
+      });
+    } catch (e) {
+      print("사용자 정보 가져오기 오류: $e");
+    }
+  }
+
+  Future<void> _updateNickname() async {
+    print("닉네임 업데이트 시작: $_newNickname");
+    await updateNickname(_newNickname, (nickname) {
+      setState(() {
+        _nickname = nickname;
+        print("닉네임 업데이트 완료: $_nickname");
+      });
+    });
+  }
+
+  Future<void> _updateProfileImage() async {
+    try {
+      print("프로필 이미지 업데이트 시작");
+      await updateProfileImage((downloadUrl) {
+        if (downloadUrl.isNotEmpty) {
+          setState(() {
+            _profileImageUrl = downloadUrl;
+          });
+          print("프로필 이미지 업데이트 완료: $_profileImageUrl");
+        } else {
+          print("이미지 업로드 실패 또는 다운로드 URL이 비어있음");
+        }
+      });
+    } catch (e) {
+      print("프로필 이미지 업데이트 오류: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('내 정보'), backgroundColor: Colors.white10),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 50, horizontal: 30),
-        child: ListView(
-          children: <Widget>[
-            imageProfile(),
-            SizedBox(height: 30),
-            nameTextField(),
-            SizedBox(height: 20),
-          ],
-        ),
+      appBar: AppBar(
+        title: const Text('내 정보'),
       ),
-    );
-  }
-
-  Widget imageProfile() {
-    return Center(
-      child: Stack(
-        children: <Widget>[
-          CircleAvatar(
-            radius: 80,
-            backgroundImage: _imageFile == null
-                ? AssetImage('assets/profile.jfif') as ImageProvider
-                : FileImage(File(_imageFile!.path)),
-          ),
-          Positioned(
-            bottom: 5, // 프로필 사진과 아이콘이 살짝 겹치도록 위치 조정
-            right: 5,
-            child: InkWell(
-              onTap: () {
-                showModalBottomSheet(
-                  context: context,
-                  builder: (builder) => bottomSheet(),
-                  isScrollControlled: true, // 모달이 스크롤 가능하도록 설정
-                );
-              },
-              child: Container(
-                width: 35,
-                height: 35,
-                decoration: BoxDecoration(
-                  color: Colors.blue,
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white, // 테두리를 흰색으로 설정해 프로필과 구분
-                    width: 3,
+      body: _user == null
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment:
+                    MainAxisAlignment.spaceBetween, // 위젯 간의 여백 분배
+                crossAxisAlignment:
+                    CrossAxisAlignment.stretch, // 버튼이 화면 폭을 채우도록 설정
+                children: [
+                  Column(
+                    children: [
+                      CircleAvatar(
+                        backgroundImage: NetworkImage(
+                          '$_profileImageUrl?timestamp=${DateTime.now().millisecondsSinceEpoch}',
+                        ),
+                        radius: 40,
+                      ),
+                      const SizedBox(height: 16),
+                      Text('닉네임: $_nickname'),
+                      TextField(
+                        decoration: const InputDecoration(labelText: '새 닉네임'),
+                        onChanged: (value) => _newNickname = value,
+                      ),
+                      ElevatedButton(
+                        onPressed: _updateNickname,
+                        child: const Text('닉네임 변경'),
+                      ),
+                      ElevatedButton(
+                        onPressed: _updateProfileImage,
+                        child: const Text('프로필 이미지 변경'),
+                      ),
+                    ],
                   ),
-                ),
-                child: Icon(
-                  Icons.add_circle, // `plus_circle` 대신 `add_circle`을 사용 (Dart에서는 `plus_circle`이 없음)
-                  color: Colors.white,
-                  size: 20,
-                ),
-
+                ],
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget nameTextField() {
-    return TextFormField(
-      decoration: InputDecoration(
-        border: UnderlineInputBorder(
-          borderSide: BorderSide(
-            color: primaryTextColor,
-          ),
-        ),
-        focusedBorder: UnderlineInputBorder(
-          borderSide: BorderSide(
-            color: secondaryTextColor,
-            width: 2,
-          ),
-        ),
-        prefixIcon: Icon(
-          Icons.person_outline,
-          color: primaryTextColor,
-        ),
-        labelText: '이름',
-        labelStyle: TextStyle(color: primaryTextColor),
-      ),
-    );
-  }
-
-  Widget bottomSheet() {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 20),
-      child: Wrap( // Wrap을 사용하여 내용이 화면을 넘어가지 않도록 조정
-        children: [
-          Center(
-            child: Text(
-              '프로필 변경하기',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(16),
+        child: ElevatedButton(
+          onPressed: () => _signOut(context),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.redAccent,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
           ),
-          SizedBox(height: 20),
-          Center(
-            child: ElevatedButton.icon(
-              icon: Icon(Icons.photo_library),
-              label: Text("앨범에서 사진 선택"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () {
-                Navigator.of(context).pop(); // 창 닫기
-                takePhoto(ImageSource.gallery); // 갤러리에서 사진 선택
-              },
-            ),
+          child: const Text(
+            'Log out',
+            style: TextStyle(fontSize: 18),
           ),
-        ],
+        ),
       ),
     );
-  }
-
-  Future<void> takePhoto(ImageSource source) async {
-    final XFile? pickedFile = await _picker.pickImage(source: source);
-    setState(() {
-      _imageFile = pickedFile;
-    });
   }
 }

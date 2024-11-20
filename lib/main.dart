@@ -7,7 +7,8 @@ import 'group/screens/group_list_screen.dart';
 import 'note/Memo.dart'; // 메모 화면 import
 import 'Profile.dart'; // 프로필 페이지 import
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,37 +16,113 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
   await initializeDateFormatting('ko', ''); // 날짜 형식 초기화
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Firestore Memo App',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: SignInPage(),
+    );
+  }
+}
+
+final GoogleSignIn _googleSignIn = GoogleSignIn(
+  scopes: [
+    'email',
+    'https://www.googleapis.com/auth/userinfo.profile',
+  ],
+);
+
+class SignInPage extends StatelessWidget {
+  const SignInPage({Key? key}) : super(key: key);
+
+  Future<void> _signIn(BuildContext context) async {
+  try {
+    print("Google 로그인 시작");
+
+    // Google 로그아웃 시도
+    await _googleSignIn.signOut();
+
+    final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+    if (googleUser == null) {
+      print("로그인 취소됨");
+      return;
+    }
+
+    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+    final AuthCredential credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+
+    final UserCredential userCredential =
+        await FirebaseAuth.instance.signInWithCredential(credential);
+    User? currentUser = userCredential.user;
+
+    if (currentUser != null) {
+      print("로그인 성공: UID - ${currentUser.uid}");
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const GoogleBottomBar()),
+      );
+    } else {
+      print("로그인 실패: 사용자 정보가 없습니다.");
+    }
+  } catch (e) {
+    print("Google 로그인 오류: $e");
+  }
+}
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder(
-      future: Firebase.initializeApp(), // Firebase 초기화
-      builder: (context, snapshot) {
-        // Firebase 초기화 완료 상태 확인
-        if (snapshot.connectionState == ConnectionState.done) {
-          return MaterialApp(
-            title: 'melender',
-            theme: ThemeData(
-              primarySwatch: Colors.blue,
-            ),
-            home: const GoogleBottomBar(),
-          );
-        }
-
-        // 초기화가 진행 중일 때 로딩 화면 표시
-        return const MaterialApp(
-          home: Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
+    return Scaffold(
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFB3E5FC),
+              Color(0xFFE1F5FE),
+            ],
           ),
-        );
-      },
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              'MELENDAR',
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () => _signIn(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: const Text(
+                'Sign in',
+                style: TextStyle(fontSize: 18),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
