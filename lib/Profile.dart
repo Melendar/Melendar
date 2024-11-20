@@ -140,7 +140,21 @@ class Profile extends State<RegistProfile> {
                         radius: 40,
                       ),
                       const SizedBox(height: 16),
-                      Text('닉네임: $_nickname'),
+                      Text(
+                        '닉네임: $_nickname',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        )),
+                      const SizedBox(height: 4),
+                      Text(
+                        'ID: ${_user?.uid ?? "알 수 없음"}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey, // 회색 텍스트
+                        ),
+                      ),
+                      const SizedBox(height: 16),
                       TextField(
                         decoration: const InputDecoration(labelText: '새 닉네임'),
                         onChanged: (value) => _newNickname = value,
