@@ -48,6 +48,7 @@ class _NoteState extends State<Note> {
 
   /// 메모 리스트 빌드 함수
   Widget _buildMemoList(String userId) {
+    // Firestore의 memos 컬렉션에서 데이터를 스트림으로 가져옵니다.
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('users')
@@ -66,7 +67,10 @@ class _NoteState extends State<Note> {
         }
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return const Center(
-            child: Text('저장된 메모가 없습니다!', style: TextStyle(fontSize: 18)),
+            child: Text(
+              '저장된 메모가 없습니다!',
+              style: TextStyle(fontSize: 18),
+            ),
           );
         }
 
@@ -85,34 +89,43 @@ class _NoteState extends State<Note> {
                 ? '${timestamp.year}-${timestamp.month}-${timestamp.day}'
                 : '날짜 없음';
 
-            return ListTile(
-              title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text('$content\n$date', maxLines: 2, overflow: TextOverflow.ellipsis),
-              leading: CircleAvatar(
-                child: Text('${index + 1}'),
-              ),
-              trailing: IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red),
-                onPressed: () => _deleteMemo(memoId),
-              ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => MemoEditScreen(
-                      memoId: memoId,
-                      userId: userId,
+            return Card(
+              margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+              child: ListTile(
+                title: Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(
+                  '$content\n$date',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                leading: CircleAvatar(
+                  child: Text('${index + 1}'),
+                ),
+                trailing: IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () => _deleteMemo(memoId),
+                ),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => MemoEditScreen(
+                        memoId: memoId,
+                        userId: userId,
+                      ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             );
           },
         );
       },
     );
   }
-
   @override
   Widget build(BuildContext context) {
     final currentUser = FirebaseAuth.instance.currentUser;
