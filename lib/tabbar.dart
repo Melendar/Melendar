@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
-import 'user_data/user_provider.dart';
+import 'user_manage/user_provider.dart';
 import 'calendar/calendar.dart';
 import 'group/screens/group_list_screen.dart';
-import 'note/Memo.dart';
-import 'user_data/Profile.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'Memo/Memo.dart';
+import 'user_manage/Profile.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);

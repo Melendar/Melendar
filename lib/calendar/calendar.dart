@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:calendar_view/calendar_view.dart';
 import 'package:intl/intl.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../user_data/user_provider.dart';
+import '../user_manage/user_provider.dart';
 import '../service/event_service.dart';
 import 'firebase_event_data.dart';
 import 'package:provider/provider.dart';

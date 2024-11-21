@@ -6,9 +6,16 @@ final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 class MemoEditScreen extends StatefulWidget {
   final String? memoId; // memoId를 통해 기존 메모인지 새 메모인지 구분
   final String userId;  // userId를 전달받아 메모 저장
+  final String? initialTitle; // 수정 시 기존 제목
+  final String? initialContent; // 수정 시 기존 내용
 
-  const MemoEditScreen({Key? key, this.memoId, required this.userId}) : super(key: key);
-
+  const MemoEditScreen({
+    Key? key,
+    required this.userId,
+    this.memoId,
+    this.initialTitle,
+    this.initialContent,
+  }) : super(key: key);
   @override
   _MemoEditScreenState createState() => _MemoEditScreenState();
 }
@@ -81,7 +88,6 @@ class _MemoEditScreenState extends State<MemoEditScreen> {
         'timestamp': FieldValue.serverTimestamp(),
       });
     }
-
     Navigator.pop(context,true);
   }
 
@@ -91,9 +97,16 @@ class _MemoEditScreenState extends State<MemoEditScreen> {
       appBar: AppBar(
         title: const Text('메모 작성'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
+          TextButton(
             onPressed: _saveMemo,
+            child: const Text(
+              '저장',
+              style: TextStyle(
+                color: Colors.black, // 텍스트 색상
+                fontWeight: FontWeight.bold, // 굵은 글씨
+                fontSize: 16, // 글씨 크기
+              ),
+            ),
           ),
         ],
       ),

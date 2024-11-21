@@ -2,18 +2,9 @@ import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
+import '../service/memo_service.dart';
 import 'MemoEditScreen.dart';
 
-void main() {
-  runApp(
-    const MaterialApp(
-      home: Memo(),
-      debugShowCheckedModeBanner: false,
-    ),
-  );
-}
-// const IconData note_add = IconData(0xe44a, fontFamily: 'MaterialIcons');
 
 class Memo extends StatefulWidget {
   const Memo({Key? key}) : super(key: key);
@@ -21,10 +12,13 @@ class Memo extends StatefulWidget {
   @override
   _MemoState createState() => _MemoState();
 }
-
 class _MemoState extends State<Memo> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String? _userId;
+  bool _isSelectionMode = false;
+  final Set<String> _selectedMemos = {};
+  String _searchQuery = ''; // 검색어 저장
+  bool _isSearching = false; // 검색 활성화 상태
 
   @override
   void initState() {
@@ -32,7 +26,6 @@ class _MemoState extends State<Memo> {
     _initializeUserId();
   }
 
-  /// FirebaseAuth에서 로그인한 사용자 ID를 가져오는 함수
   Future<void> _initializeUserId() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -44,59 +37,86 @@ class _MemoState extends State<Memo> {
     }
   }
 
-  /// Firestore에서 메모 데이터를 가져오는 함수
-  Future<List<Map<String, dynamic>>> fetchMemosByUserId(String userId) async {
-    if (userId.isEmpty) {
-      return [];
-    }
-
-    try {
-      final querySnapshot = await _firestore
-          .collection('Users')
-          .doc(userId)
-          .collection('Memos')
-          .orderBy('timestamp', descending: true)
-          .get();
-
-      return querySnapshot.docs.map((doc) {
-        final data = doc.data();
-        final timestamp = data['timestamp'] as Timestamp?;
-        final date =
-        timestamp != null ? timestamp.toDate().toString() : 'No Date';
-
-        return {
-          'memoId': doc.id,
-          'title': data['title'] ?? '제목 없음',
-          'content': data['content'] ?? '내용 없음',
-          'date': date,
-        };
-      }).toList();
-    } catch (e) {
-      print('Error fetching memos: $e');
-      return [];
-    }
+  void _toggleSelectionMode() {
+    setState(() {
+      _isSelectionMode = !_isSelectionMode;
+      _selectedMemos.clear();
+    });
   }
 
-  void _showAction(BuildContext context, String action) {
-    showDialog<void>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          content: Text(action),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('CLOSE'),
-            ),
-          ],
-        );
+  void _onMemoSelected(String memoId, bool selected) {
+    setState(() {
+      if (selected) {
+        _selectedMemos.add(memoId);
+      } else {
+        _selectedMemos.remove(memoId);
+      }
+    });
+  }
+
+  /// 검색창 생성
+  Widget _buildSearchField() {
+    return TextField(
+      autofocus: true,
+      decoration: const InputDecoration(
+        hintText: '메모 검색',
+        border: InputBorder.none,
+      ),
+      onChanged: (query) {
+        setState(() {
+          _searchQuery = query;
+        });
       },
     );
   }
 
+  /// AppBar의 액션 변경
+  List<Widget> _buildActions() {
+    if (_isSearching) {
+      return [
+        IconButton(
+          icon: const Icon(Icons.clear),
+          onPressed: () {
+            setState(() {
+              _searchQuery = '';
+              _isSearching = false;
+            });
+          },
+        ),
+      ];
+    } else {
+      return [
+        IconButton(
+          icon: const Icon(Icons.search),
+          onPressed: () {
+            setState(() {
+              _isSearching = true;
+            });
+          },
+        ),
+        if (_isSelectionMode)
+          IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: _selectedMemos.isEmpty
+                ? null
+                : () async {
+              for (var memoId in _selectedMemos) {
+                await _firestore
+                    .collection('Users')
+                    .doc(_userId)
+                    .collection('Memos')
+                    .doc(memoId)
+                    .delete();
+              }
+              _toggleSelectionMode();
+            },
+          ),
+      ];
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // 로그인 정보가 없으면 로딩 화면 표시
     if (_userId == null) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -105,7 +125,8 @@ class _MemoState extends State<Memo> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('메모 관리'),
+        title: _isSearching ? _buildSearchField() : const Text('메모 관리'),
+        actions: _buildActions(),
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: fetchMemosByUserId(_userId!),
@@ -127,7 +148,15 @@ class _MemoState extends State<Memo> {
             );
           }
 
-          final memos = snapshot.data!;
+          // 검색 적용
+          final memos = snapshot.data!
+              .where((memo) => memo['title']
+              .toLowerCase()
+              .contains(_searchQuery.toLowerCase()) ||
+              memo['content']
+                  .toLowerCase()
+                  .contains(_searchQuery.toLowerCase()))
+              .toList();
 
           return ListView.builder(
             itemCount: memos.length,
@@ -137,11 +166,18 @@ class _MemoState extends State<Memo> {
               final title = memo['title'];
               final content = memo['content'];
               final date = memo['date'];
+              final isSelected = _selectedMemos.contains(memoId);
 
               return Card(
-                margin: const EdgeInsets.symmetric(
-                    vertical: 8.0, horizontal: 16.0),
+                margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
                 child: ListTile(
+                  leading: _isSelectionMode
+                      ? Checkbox(
+                    value: isSelected,
+                    onChanged: (selected) =>
+                        _onMemoSelected(memoId, selected ?? false),
+                  )
+                      : null,
                   title: Text(
                     title,
                     style: const TextStyle(fontWeight: FontWeight.bold),
@@ -157,19 +193,26 @@ class _MemoState extends State<Memo> {
                       ),
                     ],
                   ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete_outline_rounded,
-                        color: Colors.black45),
-                    onPressed: () async {
-                      await _firestore
-                          .collection('Users')
-                          .doc(_userId)
-                          .collection('Memos')
-                          .doc(memoId)
-                          .delete();
-                      setState(() {});
-                    },
-                  ),
+                  onTap: () async {
+                    if (_isSelectionMode) {
+                      _onMemoSelected(memoId, !isSelected);
+                    } else {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => MemoEditScreen(
+                            userId: _userId!,
+                            memoId: memoId,
+                            initialTitle: title,
+                            initialContent: content,
+                          ),
+                        ),
+                      );
+                      if (result == true) {
+                        setState(() {});
+                      }
+                    }
+                  },
                 ),
               );
             },
@@ -177,7 +220,7 @@ class _MemoState extends State<Memo> {
         },
       ),
       floatingActionButton: ExpandableFab(
-        distance: 112,
+        distance: 100,
         children: [
           ActionButton(
             onPressed: () async {
@@ -188,21 +231,21 @@ class _MemoState extends State<Memo> {
                 ),
               );
               if (result == true) {
-                // 새로 고침 트리거
                 setState(() {});
               }
             },
-            icon: const Icon(Icons.note_add),
+            icon: const Icon(Icons.edit),
           ),
           ActionButton(
-            onPressed: () => _showAction(context, 'Edit memo'),
-            icon: const Icon(Icons.check_circle_outline_sharp),
+            onPressed: _toggleSelectionMode,
+            icon: Icon(_isSelectionMode ? Icons.close : Icons.check_circle_outline_sharp),
           ),
         ],
       ),
     );
   }
 }
+
 
 @immutable
 class ExpandableFab extends StatefulWidget {
@@ -291,14 +334,12 @@ class _ExpandableFabState extends State<ExpandableFab>
       ),
     );
   }
-
+// 펼쳐지는 두 아이콘의 각도 조절 가능
   List<Widget> _buildExpandingActionButtons() {
     final children = <Widget>[];
     final count = widget.children.length;
-    final step = 60.0 / (count - 1);
-    for (var i = 0, angleInDegrees = 15.0;
-    i < count;
-    i++, angleInDegrees += step) {
+    final step = 90.0 / (count - 1);
+    for (var i = 0, angleInDegrees = 0.0; i < count; i++, angleInDegrees += step) {
       children.add(
         _ExpandingActionButton(
           directionInDegrees: angleInDegrees,
@@ -317,18 +358,21 @@ class _ExpandableFabState extends State<ExpandableFab>
       child: AnimatedContainer(
         transformAlignment: Alignment.center,
         transform: Matrix4.diagonal3Values(
-          _open ? 0.7 : 1.0,
-          _open ? 0.7 : 1.0,
+          _open ? 0.5 : 1.0,
+          _open ? 0.5 : 1.0,
           1.0,
-        ),
+        ), //아이콘 애니메이션
+
         duration: const Duration(milliseconds: 250),
-        curve: const Interval(0.0, 0.5, curve: Curves.easeOut),
+        curve: const Interval(0.0, 0.5, curve: Curves.easeOutQuad),
         child: AnimatedOpacity(
           opacity: _open ? 0.0 : 1.0,
-          curve: const Interval(0.25, 1.0, curve: Curves.easeInOut),
+          curve: const Interval(0.25, 1.0, curve: Curves.easeInOutQuad),
           duration: const Duration(milliseconds: 250),
           child: FloatingActionButton(
             onPressed: _toggle,
+            backgroundColor: Colors.white, // 버튼 배경 색상
+            foregroundColor: Colors.black, // 아이콘 색상
             child: const Icon(Icons.edit_note_rounded),
           ),
         ),
