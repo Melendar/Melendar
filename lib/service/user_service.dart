@@ -7,7 +7,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
 import 'dart:typed_data';
-
+import '../group/models/user_profile.dart';
 
 final FirebaseAuth _auth = FirebaseAuth.instance;
 final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -38,7 +38,8 @@ Future<void> signInWithGoogle() async {
       print("사용자 이메일: ${googleUser.email}");
       print("사용자 이름: ${googleUser.displayName}");
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
       print("Access Token: ${googleAuth.accessToken}");
       print("ID Token: ${googleAuth.idToken}");
 
@@ -49,7 +50,8 @@ Future<void> signInWithGoogle() async {
 
       print("Firebase 인증 자격 증명 생성 완료");
 
-      final UserCredential userCredential = await _auth.signInWithCredential(credential);
+      final UserCredential userCredential =
+          await _auth.signInWithCredential(credential);
       _user = userCredential.user;
 
       if (_user != null) {
@@ -65,7 +67,8 @@ Future<void> signInWithGoogle() async {
       print("웹 플랫폼에서 Google 로그인 시도");
 
       final GoogleAuthProvider googleProvider = GoogleAuthProvider();
-      final UserCredential userCredential = await _auth.signInWithPopup(googleProvider);
+      final UserCredential userCredential =
+          await _auth.signInWithPopup(googleProvider);
       _user = userCredential.user;
 
       if (_user != null) {
@@ -104,7 +107,8 @@ Future<void> handleUserInFirestore(Function callback) async {
       final nickname = userDoc.data()?['nickname'] ?? 'Anonymous';
       final profileImage = userDoc.data()?['profileImage'] ?? '';
 
-      print("Firestore: 기존 사용자 정보 조회 성공 - 닉네임: $nickname, 프로필 이미지: $profileImage");
+      print(
+          "Firestore: 기존 사용자 정보 조회 성공 - 닉네임: $nickname, 프로필 이미지: $profileImage");
 
       // 화면 업데이트 콜백 호출
       callback(nickname, profileImage);
@@ -113,7 +117,8 @@ Future<void> handleUserInFirestore(Function callback) async {
       final googleNickname = _user!.displayName ?? 'Anonymous';
       final googleProfileImage = _user!.photoURL ?? '';
 
-      print("Firestore: 사용자 정보 없음, 새 사용자 생성 중 - 닉네임: $googleNickname, 프로필 이미지: $googleProfileImage");
+      print(
+          "Firestore: 사용자 정보 없음, 새 사용자 생성 중 - 닉네임: $googleNickname, 프로필 이미지: $googleProfileImage");
 
       // Firestore에 새로운 사용자 정보 저장
       await userRef.set({
@@ -128,7 +133,6 @@ Future<void> handleUserInFirestore(Function callback) async {
     print("handleUserInFirestore 오류: $e");
   }
 }
-
 
 // Android의 ContentResolver를 사용해 URI에서 바이트 데이터를 읽어오기
 Future<ByteData?> getUriByteData(String uri) async {
@@ -162,26 +166,27 @@ Future<Uint8List?> _getBytesFromUri(String uri) async {
 }
 
 // userId 값으로 사용자 정보 가져오기
-Future<Map<String, String>> fetchUserById(String userId) async {
-  if (userId.isEmpty) return {};
-
+Future<UserProfile?> fetchUserById(String userId) async {
+  if (userId.isEmpty) return null;
   try {
     final userDoc = await _firestore.collection('Users').doc(userId).get();
-
     if (userDoc.exists) {
       final nickname = userDoc['nickname'] ?? 'Anonymous';
-      final profileImageUrl = userDoc['profileImage'] ?? ''; // 디코딩 제거
+      final profileImageUrl = userDoc['profileImage'] ?? '';
       print("Firestore에서 가져온 닉네임: $nickname, 프로필 이미지 URL: $profileImageUrl");
-      return {
-        'nickname': nickname,
-        'profileImage': profileImageUrl,
-      };
+      // UserProfile은 ../group/models/user_profile에 정의돼있으며 이 밑 3개 값만 포함하는 클래스임
+      // 이 함수 자체를 group화면에서만 써서 이렇게 해놨습니다 기존엔 Map을 반환했었음
+      return UserProfile(
+        id: userId,
+        nickname: nickname,
+        profileImage: profileImageUrl,
+      );
     } else {
-      return {};
+      return null;
     }
   } catch (e) {
     print("fetchUserById 오류: $e");
-    return {};
+    return null;
   }
 }
 

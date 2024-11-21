@@ -1,70 +1,201 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/group_model.dart';
+import '../models/user_profile.dart';
 import '../widgets/group_card.dart';
 import 'group_detail_screen.dart';
 import 'add_group_screen.dart';
+import '../../service/user_service.dart';
+import '../../service/group_service.dart';
 import '../../user_manage/user_provider.dart';
 
-class GroupListScreen extends StatelessWidget {
+class GroupListScreen extends StatefulWidget {
+  @override
+  _GroupListScreenState createState() => _GroupListScreenState();
+}
+
+class _GroupListScreenState extends State<GroupListScreen> {
+  final Map<String, Future<UserProfile?>> userCache = {};
+  final GroupService _groupService = GroupService();
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchInitialData();
+  }
+
+  Future<void> _fetchInitialData() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    await userProvider.fetchGroups();
+  }
+
+  Future<UserProfile?> getUserProfile(String userId) {
+    return userCache.putIfAbsent(userId, () => fetchUserById(userId));
+  }
+
   @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProvider>(context);
-    final userName = userProvider.user?.displayName ?? '사용자';
-    final groups = userProvider.groups
-        .map((groupData) => Group(
-              id: groupData['group_id'],
-              name: groupData['group_name'],
-              description: groupData['group_description'],
-              members: List<String>.from(groupData['members']),
-              isAdmin: groupData['members'][0] == userProvider.user?.uid,
-            ))
-        .toList();
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final userId = userProvider.user?.uid;
 
     return Scaffold(
       appBar: AppBar(
         title: Text('그룹'),
         actions: [
           IconButton(
-            icon: Icon(Icons.add),
+            icon: Icon(Icons.search),
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => AddGroupScreen(),
+              showSearch(
+                context: context,
+                delegate: GroupSearchDelegate(
+                  groups: userProvider.groups,
+                  userProvider: userProvider,
+                  getUserProfile: getUserProfile,
+                  userId: userId ?? '',
                 ),
               );
             },
           ),
           IconButton(
-            icon: Icon(Icons.search),
+            icon: Icon(Icons.add),
             onPressed: () {
-              // 검색 기능 구현
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AddGroupScreen(userId: userId),
+                ),
+              );
             },
           ),
         ],
       ),
-      body: groups.isEmpty
-          ? Center(child: Text('참여 중인 그룹이 없습니다.'))
-          : ListView.builder(
-              itemCount: groups.length,
-              itemBuilder: (context, index) {
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => GroupDetailScreen(
-                          group: groups[index],
-                          userName: userName,
-                        ),
+      body: Consumer<UserProvider>(
+        builder: (context, userProvider, child) {
+          final groups = userProvider.groups
+              .map((groupData) => Group(
+                    id: groupData['group_id'],
+                    name: groupData['group_name'],
+                    description: groupData['group_description'],
+                    members: List<String>.from(groupData['members']),
+                  ))
+              .toList();
+
+          return groups.isEmpty
+              ? Center(child: Text('참여 중인 그룹이 없습니다.'))
+              : ListView.builder(
+                  itemCount: groups.length,
+                  itemBuilder: (context, index) {
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => GroupDetailScreen(
+                              group: groups[index],
+                              userId: userId ?? '',
+                              getUserProfile: getUserProfile,
+                            ),
+                          ),
+                        );
+                      },
+                      child: GroupCard(
+                        group: groups[index],
+                        getUserProfile: getUserProfile,
                       ),
                     );
                   },
-                  child: GroupCard(group: groups[index]),
                 );
-              },
-            ),
+        },
+      ),
     );
+  }
+}
+
+class GroupSearchDelegate extends SearchDelegate {
+  final List<Map<String, dynamic>> groups;
+  final UserProvider userProvider;
+  final Future<UserProfile?> Function(String) getUserProfile;
+  final String userId;
+
+  GroupSearchDelegate({
+    required this.groups,
+    required this.userProvider,
+    required this.getUserProfile,
+    required this.userId,
+  });
+
+  @override
+  List<Widget> buildActions(BuildContext context) {
+    return [
+      IconButton(
+        icon: Icon(Icons.clear),
+        onPressed: () {
+          query = '';
+        },
+      ),
+    ];
+  }
+
+  @override
+  Widget buildLeading(BuildContext context) {
+    return IconButton(
+      icon: Icon(Icons.arrow_back),
+      onPressed: () {
+        close(context, null);
+      },
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    return buildSuggestions(context);
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    final filteredGroups = groups.where((group) {
+      final name = group['group_name'].toString().toLowerCase();
+      final description = group['group_description'].toString().toLowerCase();
+      final members = List<String>.from(group['members'])
+          .map((memberId) => userProvider.getMemberNickname(memberId).toLowerCase())
+          .toList();
+          
+      return name.contains(query.toLowerCase()) ||
+             description.contains(query.toLowerCase()) ||
+             members.any((nickname) => nickname.contains(query.toLowerCase()));
+    }).toList();
+
+    return filteredGroups.isEmpty
+        ? Center(child: Text('검색 결과가 없습니다.'))
+        : ListView.builder(
+            itemCount: filteredGroups.length,
+            itemBuilder: (context, index) {
+              final group = Group(
+                id: filteredGroups[index]['group_id'],
+                name: filteredGroups[index]['group_name'],
+                description: filteredGroups[index]['group_description'],
+                members: List<String>.from(filteredGroups[index]['members']),
+              );
+              
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => GroupDetailScreen(
+                        group: group,
+                        userId: userId,
+                        getUserProfile: getUserProfile,
+                      ),
+                    ),
+                  );
+                },
+                child: GroupCard(
+                  group: group,
+                  getUserProfile: getUserProfile,
+                ),
+              );
+            },
+          );
   }
 }

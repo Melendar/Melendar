@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
 import '../models/group_model.dart';
-import 'group_management_screen.dart'; // 그룹 관리 화면 import
+import '../models/user_profile.dart';
+import 'group_management_screen.dart';
+import '../../service/group_service.dart';
+import 'package:provider/provider.dart';
+import '../../user_manage/user_provider.dart';
+import '../../service/user_service.dart';
 
 class GroupDetailScreen extends StatefulWidget {
   final Group group;
-  final String userName;
+  final String userId;
+  final Future<UserProfile?> Function(String) getUserProfile;
 
   const GroupDetailScreen({
     Key? key,
     required this.group,
-    required this.userName,
+    required this.userId,
+    required this.getUserProfile,
   }) : super(key: key);
 
   @override
@@ -17,12 +24,12 @@ class GroupDetailScreen extends StatefulWidget {
 }
 
 class _GroupDetailScreenState extends State<GroupDetailScreen> {
-  late String userName;
+  late Future<UserProfile?> _userProfileFuture;
 
   @override
   void initState() {
     super.initState();
-    userName = widget.userName;
+    _userProfileFuture = widget.getUserProfile(widget.userId);
   }
 
   @override
@@ -38,103 +45,161 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
           IconButton(
             icon: Icon(Icons.person_add),
             onPressed: () {
-              showAddMemberPopup(context); // 멤버 추가 팝업 호출
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      AddMemberScreen(groupId: widget.group.id),
+                ),
+              );
             },
           ),
-          if (widget.group.isAdmin)
-            IconButton(
-              icon: Icon(Icons.settings), // 환경설정 아이콘
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        GroupManagementScreen(group: widget.group),
-                  ),
-                );
-              },
-            ),
+          IconButton(
+            icon: Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      GroupManagementScreen(group: widget.group),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: Icon(Icons.exit_to_app),
             onPressed: () {
-              showExitGroupPopup(context, widget.group.isAdmin); // 그룹 나가기 팝업 호출
+              showExitGroupPopup(context);
             },
           ),
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0), // 전체적인 패딩 적용
+        padding: const EdgeInsets.all(16.0),
         child: Card(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10), // Rounded Box 적용
+            borderRadius: BorderRadius.circular(10),
           ),
           elevation: 2,
           child: Padding(
-            padding: const EdgeInsets.all(16.0), // 카드 내부 패딩
+            padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 그룹명과 그룹 설명
                 Text(
                   widget.group.name,
                   style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.teal),
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.teal,
+                  ),
                 ),
                 SizedBox(height: 8),
                 Text(widget.group.description, style: TextStyle(fontSize: 16)),
                 SizedBox(height: 16),
-
-                // 사용자 프로필 사진과 이름 (좌측 정렬 통일)
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    CircleAvatar(
-                      // 사용자 프로필 사진 추가
-                      child: Icon(Icons.person), // 더미 아이콘 (추후 실제 이미지로 대체 가능)
-                    ),
-                    SizedBox(width: 8), // 프로필 사진과 이름 사이 간격
-                    Text(userName, style: TextStyle(fontSize: 18)),
-                    SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () {
-                        _editUserName();
-                      },
-                      child: Icon(Icons.edit, size: 18),
-                    ),
-                  ],
+                FutureBuilder<UserProfile?>(
+                  future: _userProfileFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return CircularProgressIndicator();
+                    } else if (snapshot.hasError) {
+                      return Text('Error: ${snapshot.error}');
+                    } else if (snapshot.hasData && snapshot.data != null) {
+                      final userProfile = snapshot.data!;
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          CircleAvatar(
+                            backgroundImage: userProfile.profileImage.isNotEmpty
+                                ? NetworkImage(userProfile.profileImage)
+                                : null,
+                            child: userProfile.profileImage.isEmpty
+                                ? Icon(Icons.person)
+                                : null,
+                          ),
+                          SizedBox(width: 8),
+                          Text(userProfile.nickname,
+                              style: TextStyle(fontSize: 18)),
+                          SizedBox(width: 8),
+                        ],
+                      );
+                    } else {
+                      return Text('User not found',
+                          style: TextStyle(fontSize: 18));
+                    }
+                  },
                 ),
                 SizedBox(height: 16),
-
-                // hr (rounded box와 같은 두께)
                 Container(
                   height: 2,
                   width: double.infinity,
-                  color:
-                      Colors.teal.withOpacity(0.5), // rounded box와 같은 색상 및 두께
+                  color: Colors.teal.withOpacity(0.5),
                 ),
                 SizedBox(height: 16),
-
-                // 멤버 리스트 (좌측 정렬 통일)
                 Expanded(
                   child: ListView.builder(
-                    itemCount: widget.group.members.length,
+                    itemCount: widget.group.members
+                        .where((id) => id != widget.userId)
+                        .length,
                     itemBuilder: (context, index) {
-                      return Padding(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 4.0, horizontal: 0.0), // 좌측 여백 통일
-                          child: Row(
-                            // ListTile 대신 Row로 직접 구성하여 좌측 정렬 통일
-                            children: [
-                              CircleAvatar(child: Icon(Icons.person)),
-                              SizedBox(width: 8),
-                              Text(widget.group.members[index]),
-                            ],
-                          ));
+                      final memberId = widget.group.members
+                          .where((id) => id != widget.userId)
+                          .toList()[index];
+                      return FutureBuilder<UserProfile?>(
+                        future: widget.getUserProfile(memberId),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 4.0),
+                              child: Row(
+                                children: [
+                                  CircleAvatar(
+                                      child: CircularProgressIndicator()),
+                                  SizedBox(width: 8),
+                                  Text('로딩 중...'),
+                                ],
+                              ),
+                            );
+                          }
+                          final userProfile = snapshot.data;
+                          if (userProfile == null) {
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 4.0),
+                              child: Row(
+                                children: [
+                                  CircleAvatar(child: Icon(Icons.person)),
+                                  SizedBox(width: 8),
+                                  Text(memberId),
+                                ],
+                              ),
+                            );
+                          }
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4.0),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  backgroundImage: userProfile
+                                          .profileImage.isNotEmpty
+                                      ? NetworkImage(userProfile.profileImage)
+                                      : null,
+                                  child: userProfile.profileImage.isEmpty
+                                      ? Icon(Icons.person)
+                                      : null,
+                                ),
+                                SizedBox(width: 8),
+                                Text(userProfile.nickname),
+                              ],
+                            ),
+                          );
+                        },
+                      );
                     },
                   ),
-                )
+                ),
               ],
             ),
           ),
@@ -143,76 +208,135 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     );
   }
 
-  void _editUserName() async {
-    String newUserName = await showDialog<String>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text('이름 수정'),
-            content: TextField(
-                onSubmitted: (value) {
-                  Navigator.pop(context, value);
-                },
-                decoration: InputDecoration(hintText: '새 이름 입력')),
-          ),
-        ) ??
-        userName;
-
-    setState(() {
-      userName = newUserName;
-    });
-
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('백에 바뀐 이름 보내기')));
-  }
-
-// 멤버 추가 팝업 함수
-  void showAddMemberPopup(BuildContext context) {
+  void showExitGroupPopup(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10), // Rounded Box 적용
+            borderRadius: BorderRadius.circular(10),
           ),
-          title: Text('멤버 추가'),
-          content: Container(
-            width: double.maxFinite,
-            child: TextField(
-              decoration: InputDecoration(
-                prefixIcon: Icon(Icons.search),
-                hintText: 'ID로 검색 후 추가',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10), // Rounded Box 적용
-                ),
-              ),
+          title: Text('그룹에서 나가시겠습니까?'),
+          actionsAlignment: MainAxisAlignment.center,
+          actionsPadding: EdgeInsets.symmetric(horizontal: 8),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('아니오', style: TextStyle(color: Colors.blue)),
             ),
-          ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('네'),
+            ),
+          ],
         );
       },
     );
   }
+}
 
-// 그룹 나가기 팝업 함수
-  void showExitGroupPopup(BuildContext context, bool isAdmin) {
-    showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-              title:
-                  Text(isAdmin ? '당신은 관리자입니다. 그룹에서 나가시겠습니까?' : '그룹에서 나가시겠습니까?'),
-              actionsAlignment: MainAxisAlignment.center, // 버튼 중앙 정렬
+class AddMemberScreen extends StatefulWidget {
+  final String groupId;
 
-              actionsPadding: EdgeInsets.symmetric(horizontal: 8),
-              actions: [
-                OutlinedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: Text('아니오', style: TextStyle(color: Colors.blue))),
+  AddMemberScreen({required this.groupId});
+
+  @override
+  _AddMemberScreenState createState() => _AddMemberScreenState();
+}
+
+class _AddMemberScreenState extends State<AddMemberScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  UserProfile? _searchResult;
+
+  void _searchUser() async {
+    if (_searchController.text.isEmpty) return;
+
+    final result = await fetchUserById(_searchController.text);
+    setState(() {
+      _searchResult = result;
+    });
+  }
+
+  void _addMember() async {
+    if (_searchResult == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('멤버 추가'),
+        content: Text('${_searchResult!.nickname}님을 그룹에 추가하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('추가'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final groupService = GroupService();
+      await groupService.addGroupMember(widget.groupId, [_searchResult!.id]);
+
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      await userProvider.fetchGroups();
+
+      Navigator.pop(context);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('멤버 추가')),
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: '사용자 ID 입력',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 8),
                 ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: Text('네')),
-              ]);
-        });
+                  onPressed: _searchUser,
+                  child: Text('검색'),
+                ),
+              ],
+            ),
+            if (_searchResult != null) ...[
+              SizedBox(height: 16),
+              ListTile(
+                leading: CircleAvatar(
+                  backgroundImage: _searchResult!.profileImage.isNotEmpty
+                      ? NetworkImage(_searchResult!.profileImage)
+                      : null,
+                  child: _searchResult!.profileImage.isEmpty
+                      ? Icon(Icons.person)
+                      : null,
+                ),
+                title: Text(_searchResult!.nickname),
+                subtitle: Text(_searchResult!.id),
+                trailing: ElevatedButton(
+                  onPressed: _addMember,
+                  child: Text('추가'),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
   }
 }

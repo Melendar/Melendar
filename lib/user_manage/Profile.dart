@@ -74,24 +74,6 @@ class Profile extends State<RegistProfile> {
     });
   }
 
-  Future<void> _fetchUserById() async {
-    try {
-      print("사용자 정보 가져오기 시작: User ID - $_searchUserId");
-      final userData = await fetchUserById(_searchUserId);
-      final nickname = userData['nickname'] ?? 'Anonymous';
-      final profileImageUrl = userData['profileImage'] ?? '';
-
-      setState(() {
-        _searchedUserNickname = nickname;
-        _searchedUserProfileImage = profileImageUrl;
-        print(
-            "사용자 정보 가져오기 완료: 닉네임 - $_searchedUserNickname, 프로필 이미지 - $_searchedUserProfileImage");
-      });
-    } catch (e) {
-      print("사용자 정보 가져오기 오류: $e");
-    }
-  }
-
   Future<void> _updateNickname() async {
     print("닉네임 업데이트 시작: $_newNickname");
     await updateNickname(_newNickname, (nickname) {
