@@ -126,7 +126,7 @@ class _MemoState extends State<Memo> {
 
     return Scaffold(
       appBar: AppBar(
-        title: _isSearching ? _buildSearchField() : const Text('메모 관리'),
+        title: _isSearching ? _buildSearchField() : const Text('메모'),
         actions: _buildActions(),
       ),
       body: FutureBuilder<List<Map<String, dynamic>>>(
