@@ -82,7 +82,7 @@ class _MemoEditScreenState extends State<MemoEditScreen> {
       });
     }
 
-    Navigator.pop(context);
+    Navigator.pop(context,true);
   }
 
   @override
