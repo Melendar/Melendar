@@ -95,7 +95,7 @@ class _MemoEditScreenState extends State<MemoEditScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('메모 작성'),
+        title: const Text('메모'),
         actions: [
           TextButton(
             onPressed: _saveMemo,
@@ -110,29 +110,53 @@ class _MemoEditScreenState extends State<MemoEditScreen> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 13.0, vertical: 15.0), // 외부 여백 추가
+        padding: const EdgeInsets.all(10.0), // 박스 내부 여백
+        decoration: BoxDecoration(
+          color: Colors.white, // 박스 배경색
+          border: Border.all(color: Colors.black, width: 2), // 테두리 색상 및 두께
+          borderRadius: BorderRadius.circular(8.0), // 테두리 둥글게 처리
+        ),
         child: Column(
           children: [
             TextField(
               controller: _titleController,
               decoration: const InputDecoration(
                 hintText: '제목을 입력해주세요',
+                border: InputBorder.none, // 테두리 제거
+                enabledBorder: InputBorder.none, // 활성화 상태 테두리 제거
+                focusedBorder: InputBorder.none, // 포커스 상태 테두리 제거
+                contentPadding: EdgeInsets.symmetric(vertical: 8.0), // 텍스트 여백 설정
               ),
+              style: const TextStyle(
+                fontSize: 21, // 텍스트 크기
+                fontWeight: FontWeight.bold, // 텍스트 굵기 설정
+              ), // 텍스트 스타일 설정
+            ),
+            const Divider(
+              color: Colors.grey, // 선 색상
+              thickness: 1, // 선 두께
+              height: 1, // 선의 높이
             ),
             const SizedBox(height: 16.0),
             TextField(
               controller: _contentController,
               decoration: const InputDecoration(
                 hintText: '내용을 입력해주세요',
+                border: InputBorder.none, // 테두리 제거
+                enabledBorder: InputBorder.none, // 활성화 상태 테두리 제거
+                focusedBorder: InputBorder.none, // 포커스 상태 테두리 제거
+                contentPadding: EdgeInsets.symmetric(vertical: 8.0), // 텍스트 여백 설정
               ),
-              maxLines: null,
+              maxLines: null, // 여러 줄 입력 가능
+              style: TextStyle(fontSize: 16), // 텍스트 스타일 설정
             ),
           ],
         ),
+
       ),
+
     );
   }
 }
