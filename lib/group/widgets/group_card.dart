@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import '../models/group_model.dart';
+import '../models/user_profile.dart';
 
 class GroupCard extends StatelessWidget {
   final Group group;
+  final Future<UserProfile?> Function(String) getUserProfile;
 
-  const GroupCard({Key? key, required this.group}) : super(key: key);
+  const GroupCard({
+    Key? key,
+    required this.group,
+    required this.getUserProfile,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -16,24 +22,13 @@ class GroupCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 그룹명과 관리자 표시
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  group.name,
-                  style:
-                      TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                if (group.isAdmin)
-                  Text('관리자', style: TextStyle(color: Colors.green)),
-              ],
+            Text(
+              group.name,
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 8),
-            // 그룹 설명
             Text(group.description),
             SizedBox(height: 8),
-            // 멤버 목록 표시
             _buildMembersRow(),
           ],
         ),
@@ -41,37 +36,55 @@ class GroupCard extends StatelessWidget {
     );
   }
 
-  // 멤버 목록을 한 줄로 표시하고, 초과 인원은 '외 n명'으로 처리
   Widget _buildMembersRow() {
-    int maxVisibleMembers = 3; // 한 줄에 최대 표시할 멤버 수
-    List<String> visibleMembers = group.members.take(maxVisibleMembers).toList();
-    int remainingMembers = group.members.length - maxVisibleMembers;
+    return FutureBuilder<List<UserProfile?>>(
+      future: Future.wait(
+        group.members.map((userId) => getUserProfile(userId)),
+      ),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return CircularProgressIndicator();
+        }
 
-    return Row(
-      children: [
-        ...visibleMembers.map((member) => _buildMemberAvatar(member)).toList(),
-        if (remainingMembers > 0)
-          Padding(
-            padding: const EdgeInsets.only(left: 1.0),
-            child: Text('외 $remainingMembers명'),
-          ),
-      ],
+        final users = snapshot.data!
+            .where((user) => user != null)
+            .cast<UserProfile>()
+            .toList();
+        int maxVisibleMembers = 3;
+        List<UserProfile> visibleUsers = users.take(maxVisibleMembers).toList();
+        int remainingMembers = users.length - maxVisibleMembers;
+
+        return Row(
+          children: [
+            ...visibleUsers.map((user) => _buildMemberAvatar(user)).toList(),
+            if (remainingMembers > 0)
+              Padding(
+                padding: const EdgeInsets.only(left: 8.0),
+                child: Text('외 $remainingMembers명'),
+              ),
+          ],
+        );
+      },
     );
   }
 
-  // 프로필 사진과 이름을 옆으로 배치
-  Widget _buildMemberAvatar(String memberName) {
+  Widget _buildMemberAvatar(UserProfile user) {
     return Padding(
       padding: const EdgeInsets.only(right: 8.0),
       child: Row(
         children: [
-          CircleAvatar(child: Icon(Icons.person)),
-          SizedBox(width: 4), // 프로필 사진과 이름 사이 간격
+          CircleAvatar(
+            backgroundImage: user.profileImage.isNotEmpty
+                ? NetworkImage(user.profileImage)
+                : null,
+            child: user.profileImage.isEmpty ? Icon(Icons.person) : null,
+          ),
+          SizedBox(width: 4),
           Container(
-            width: 50, // 이름의 최대 너비를 설정하여 너무 길면 잘리도록 함
+            width: 50,
             child: Text(
-              memberName,
-              overflow: TextOverflow.ellipsis, // 너무 긴 이름은 ...으로 처리
+              user.nickname,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(fontSize: 12),
             ),
           ),

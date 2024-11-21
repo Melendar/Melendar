@@ -46,7 +46,7 @@ class _GroupManagementScreenState extends State<GroupManagementScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Card(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10), // Rounded Box 적용
+            borderRadius: BorderRadius.circular(10), 
           ),
           elevation: 2,
           child: Padding(

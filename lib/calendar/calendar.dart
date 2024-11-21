@@ -52,13 +52,20 @@ class _CalendarState extends State<Calendar> {
       controller: _eventController,
       child: Scaffold(
         appBar: AppBar(
-          leading: IconButton(
+          leading: 
+          IconButton(
             icon: Icon(Icons.menu),
             onPressed: () {
               Scaffold.of(context).openDrawer();
             },
           ),
           actions: [
+            IconButton(
+              icon: Icon(Icons.refresh),
+              onPressed: () {
+                _loadEvents();
+              },
+            ),
             IconButton(
               icon: Icon(Icons.search),
               onPressed: () {
