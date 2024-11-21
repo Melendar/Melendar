@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'service/user_service.dart';
-import 'main.dart';
+import './sign_in_page.dart';
+import './user_provider.dart';
+import 'package:provider/provider.dart';
 
 class RegistProfile extends StatefulWidget {
   @override
@@ -44,6 +46,9 @@ class Profile extends State<RegistProfile> {
       // Google 계정 로그아웃 (세션 해제)
       await _googleSignIn.disconnect();
       await _googleSignIn.signOut();
+
+      // Provider에서 관리되고 있던 사용자 정보 삭제
+      Provider.of<UserProvider>(context, listen: false).clearUser();
 
       print("로그아웃 완료");
 
@@ -140,12 +145,11 @@ class Profile extends State<RegistProfile> {
                         radius: 40,
                       ),
                       const SizedBox(height: 16),
-                      Text(
-                        '닉네임: $_nickname',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        )),
+                      Text('닉네임: $_nickname',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          )),
                       const SizedBox(height: 4),
                       Text(
                         'ID: ${_user?.uid ?? "알 수 없음"}',
