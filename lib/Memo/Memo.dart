@@ -12,6 +12,7 @@ class Memo extends StatefulWidget {
   @override
   _MemoState createState() => _MemoState();
 }
+
 class _MemoState extends State<Memo> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String? _userId;
