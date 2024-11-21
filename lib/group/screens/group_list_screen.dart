@@ -4,7 +4,7 @@ import '../models/group_model.dart';
 import '../widgets/group_card.dart';
 import 'group_detail_screen.dart';
 import 'add_group_screen.dart';
-import '../../user_provider.dart';
+import '../../user_data/user_provider.dart';
 
 class GroupListScreen extends StatelessWidget {
   @override

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'service/user_service.dart';
-import './sign_in_page.dart';
-import './user_provider.dart';
+import '../service/user_service.dart';
+import 'sign_in_page.dart';
+import 'user_provider.dart';
 import 'package:provider/provider.dart';
 
 class RegistProfile extends StatefulWidget {
