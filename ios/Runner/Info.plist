@@ -45,5 +45,30 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+    	<false/>
+    	<key>CFBundleURLTypes</key>
+            <array>
+                <dict>
+                    <key>CFBundleURLSchemes</key>
+                    <array>
+                        <string>com.googleusercontent.apps.863247481680-lkstnalc7kf7s3vh3dq8j4ae9i3cetct</string>
+                    </array>
+                </dict>
+            </array>
+
+            <key>LSApplicationQueriesSchemes</key>
+            <array>
+                <string>google</string>
+                <string>com.googleusercontent.apps</string>
+            </array>
+
+            <key>NSCameraUsageDescription</key>
+            <string>Camera access is required for photo upload.</string>
+            <key>NSMicrophoneUsageDescription</key>
+            <string>Microphone access is required for audio features.</string>
+            <key>NSPhotoLibraryUsageDescription</key>
+            <string>Photo library access is required for image selection.</string>
+
 </dict>
 </plist>
