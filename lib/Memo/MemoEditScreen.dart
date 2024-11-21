@@ -6,9 +6,16 @@ final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 class MemoEditScreen extends StatefulWidget {
   final String? memoId; // memoId를 통해 기존 메모인지 새 메모인지 구분
   final String userId;  // userId를 전달받아 메모 저장
+  final String? initialTitle; // 수정 시 기존 제목
+  final String? initialContent; // 수정 시 기존 내용
 
-  const MemoEditScreen({Key? key, this.memoId, required this.userId}) : super(key: key);
-
+  const MemoEditScreen({
+    Key? key,
+    required this.userId,
+    this.memoId,
+    this.initialTitle,
+    this.initialContent,
+  }) : super(key: key);
   @override
   _MemoEditScreenState createState() => _MemoEditScreenState();
 }
@@ -81,45 +88,75 @@ class _MemoEditScreenState extends State<MemoEditScreen> {
         'timestamp': FieldValue.serverTimestamp(),
       });
     }
-
-    Navigator.pop(context);
+    Navigator.pop(context,true);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('메모 작성'),
+        title: const Text('메모'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.save),
+          TextButton(
             onPressed: _saveMemo,
+            child: const Text(
+              '저장',
+              style: TextStyle(
+                color: Colors.black, // 텍스트 색상
+                fontWeight: FontWeight.bold, // 굵은 글씨
+                fontSize: 16, // 글씨 크기
+              ),
+            ),
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 13.0, vertical: 15.0), // 외부 여백 추가
+        padding: const EdgeInsets.all(10.0), // 박스 내부 여백
+        decoration: BoxDecoration(
+          color: Colors.white, // 박스 배경색
+          border: Border.all(color: Colors.black, width: 2), // 테두리 색상 및 두께
+          borderRadius: BorderRadius.circular(8.0), // 테두리 둥글게 처리
+        ),
         child: Column(
           children: [
             TextField(
               controller: _titleController,
               decoration: const InputDecoration(
                 hintText: '제목을 입력해주세요',
+                border: InputBorder.none, // 테두리 제거
+                enabledBorder: InputBorder.none, // 활성화 상태 테두리 제거
+                focusedBorder: InputBorder.none, // 포커스 상태 테두리 제거
+                contentPadding: EdgeInsets.symmetric(vertical: 8.0), // 텍스트 여백 설정
               ),
+              style: const TextStyle(
+                fontSize: 21, // 텍스트 크기
+                fontWeight: FontWeight.bold, // 텍스트 굵기 설정
+              ), // 텍스트 스타일 설정
+            ),
+            const Divider(
+              color: Colors.grey, // 선 색상
+              thickness: 1, // 선 두께
+              height: 1, // 선의 높이
             ),
             const SizedBox(height: 16.0),
             TextField(
               controller: _contentController,
               decoration: const InputDecoration(
                 hintText: '내용을 입력해주세요',
+                border: InputBorder.none, // 테두리 제거
+                enabledBorder: InputBorder.none, // 활성화 상태 테두리 제거
+                focusedBorder: InputBorder.none, // 포커스 상태 테두리 제거
+                contentPadding: EdgeInsets.symmetric(vertical: 8.0), // 텍스트 여백 설정
               ),
-              maxLines: null,
+              maxLines: null, // 여러 줄 입력 가능
+              style: TextStyle(fontSize: 16), // 텍스트 스타일 설정
             ),
           ],
         ),
+
       ),
+
     );
   }
 }

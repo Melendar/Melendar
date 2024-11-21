@@ -4,8 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'user_provider.dart';
-import 'home_page.dart';
-import 'service/group_service.dart';
+import '../tabbar.dart';
+import '../service/group_service.dart';
 
 class SignInPage extends StatelessWidget {
   SignInPage({Key? key}) : super(key: key);

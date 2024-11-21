@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart'; // intl 패키지 import
 
 final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
 
 // 메모 생성
 Future<void> createMemo(String userId, String title, String content) async {
@@ -32,26 +34,31 @@ Future<void> deleteMemo(String userId, String memoId) async {
 }
 
 // userId 값으로 메모 정보 가져오기
-Future<void> fetchMemosByUserId(String userId, Function setMemos) async {
-  if (userId.isEmpty) return;
+Future<List<Map<String, dynamic>>> fetchMemosByUserId(String userId) async {
+  if (userId.isEmpty) return [];
 
-  final querySnapshot = await _firestore
-      .collection('Users')
-      .doc(userId)
-      .collection('Memos')
-      .orderBy('timestamp', descending: true)
-      .get();
+  try {
+    final querySnapshot = await _firestore
+        .collection('Users')
+        .doc(userId)
+        .collection('Memos')
+        .orderBy('timestamp', descending: true)
+        .get();
 
-  final memos = querySnapshot.docs.map((doc) {
-    final timestamp = doc['timestamp'] as Timestamp?;
-    final date = timestamp != null ? timestamp.toDate().toString() : 'No Date';
-    return {
-      'memoId': doc.id,
-      'title': doc['title'],
-      'content': doc['content'],
-      'date': date,
-    };
-  }).toList();
+    return querySnapshot.docs.map((doc) {
+      final data = doc.data();
+      final timestamp = data['timestamp'] as Timestamp?;
+      final date = timestamp != null ? timestamp.toDate().toString() : 'No Date';
 
-  setMemos(memos);
+      return {
+        'memoId': doc.id,
+        'title': data['title'] ?? '제목 없음',
+        'content': data['content'] ?? '내용 없음',
+        'date': date,
+      };
+    }).toList();
+  } catch (e) {
+    print('Error fetching memos: $e');
+    return [];
+  }
 }

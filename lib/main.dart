@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:mobile/firebase_options.dart';
+import 'package:mobile/service/firebase_options.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
-import 'user_provider.dart';
-import 'sign_in_page.dart';
+import 'user_manage/user_provider.dart';
+import 'user_manage/sign_in_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,6 +16,7 @@ void main() async {
   runApp(
     ChangeNotifierProvider(
       create: (context) => UserProvider(),
+
       child: MyApp(),
     ),
   );

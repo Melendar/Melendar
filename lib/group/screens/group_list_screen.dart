@@ -5,8 +5,8 @@ import '../models/user_profile.dart';
 import '../widgets/group_card.dart';
 import 'group_detail_screen.dart';
 import 'add_group_screen.dart';
-import '../../user_provider.dart';
 import '../../service/user_service.dart';
+import '../../user_manage/user_provider.dart';
 
 class GroupListScreen extends StatelessWidget {
   final Map<String, Future<UserProfile?>> userCache = {};
