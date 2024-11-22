@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../group/models/group_model.dart';
 
 class GroupService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -9,8 +10,8 @@ class GroupService {
       // "개인그룹"이라는 이름의 그룹 생성
       await _firestore.collection('Groups').add({
         'group_name': '개인그룹',
-        'group_description': '',  // 빈 문자열로 설정
-        'members': [userId],  // 생성된 userId를 members에 추가
+        'group_description': '', // 빈 문자열로 설정
+        'members': [userId], // 생성된 userId를 members에 추가
       });
       print("개인그룹이 성공적으로 생성되었습니다.");
     } catch (e) {
@@ -19,13 +20,14 @@ class GroupService {
   }
 
   /// 새로운 그룹 생성
-  Future<void> createGroup(String groupName, String groupDescription, List<String> memberIds) async {
+  Future<void> createGroup(
+      String groupName, String groupDescription, List<String> memberIds) async {
     try {
       // 입력받은 groupName, groupDescription, memberIds로 그룹 생성
       await _firestore.collection('Groups').add({
         'group_name': groupName,
         'group_description': groupDescription,
-        'members': memberIds,  // 입력받은 memberIds 배열을 members에 추가
+        'members': memberIds, // 입력받은 memberIds 배열을 members에 추가
       });
       print("새로운 그룹이 성공적으로 생성되었습니다.");
     } catch (e) {
@@ -37,7 +39,8 @@ class GroupService {
   Future<List<Map<String, dynamic>>> getGroupsByUser(String userId) async {
     try {
       // members 배열에 userId가 포함된 그룹만 조회
-      QuerySnapshot snapshot = await _firestore.collection('Groups')
+      QuerySnapshot snapshot = await _firestore
+          .collection('Groups')
           .where('members', arrayContains: userId)
           .get();
 
@@ -59,10 +62,12 @@ class GroupService {
   }
 
   /// 그룹 정보 업데이트 - 그룹원만 접근 가능
-  Future<void> updateGroup(String groupId, String userId, String newGroupName, String newGroupDescription) async {
+  Future<void> updateGroup(String groupId, String userId, String newGroupName,
+      String newGroupDescription) async {
     try {
       // 그룹 문서 가져오기
-      DocumentSnapshot groupDoc = await _firestore.collection('Groups').doc(groupId).get();
+      DocumentSnapshot groupDoc =
+          await _firestore.collection('Groups').doc(groupId).get();
 
       if (groupDoc.exists) {
         // 그룹원인지 확인
@@ -85,8 +90,7 @@ class GroupService {
     }
   }
 
-
-/// 그룹 나가기 - 그룹에서 userId 제거, 멤버가 없으면 그룹 삭제
+  /// 그룹 나가기 - 그룹에서 userId 제거, 멤버가 없으면 그룹 삭제
   Future<void> leaveGroup(String groupId, String userId) async {
     try {
       DocumentReference groupRef = _firestore.collection('Groups').doc(groupId);
@@ -129,7 +133,7 @@ class GroupService {
     }
   }
 
-    /// 그룹에 멤버 추가 - 배열에 저장된 userIds를 members 필드에 추가
+  /// 그룹에 멤버 추가 - 배열에 저장된 userIds를 members 필드에 추가
   Future<void> addGroupMember(String groupId, List<String> userIds) async {
     try {
       // 해당 그룹의 members 필드에 userIds 추가
@@ -142,7 +146,19 @@ class GroupService {
     }
   }
 
-
+  // 특정 그룹만 반환
+  Future<Group?> fetchSingleGroup(String groupId) async {
+    try {
+      DocumentSnapshot doc =
+          await _firestore.collection('Groups').doc(groupId).get();
+      if (doc.exists) {
+        Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+        return Group.fromJson({...data, 'group_id': doc.id});
+      }
+      return null;
+    } catch (e) {
+      print("단일 그룹 조회 중 오류 발생: $e");
+      return null;
+    }
+  }
 }
-
-

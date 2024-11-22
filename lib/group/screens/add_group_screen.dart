@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../service/group_service.dart';
+import '../../user_manage/user_provider.dart';
 
 class AddGroupScreen extends StatefulWidget {
   final String? userId;
@@ -13,8 +15,7 @@ class AddGroupScreen extends StatefulWidget {
 class _AddGroupScreenState extends State<AddGroupScreen> {
   final GroupService _eventService = GroupService();
   final TextEditingController _groupNameController = TextEditingController();
-  final TextEditingController _groupDescriptionController =
-      TextEditingController();
+  final TextEditingController _groupDescriptionController = TextEditingController();
   List<TextEditingController> _memberIdControllers = [];
 
   @override
@@ -47,6 +48,14 @@ class _AddGroupScreenState extends State<AddGroupScreen> {
                         controller: controller,
                         decoration: InputDecoration(labelText: '구성원 ID'),
                         onChanged: (value) {
+                          // 본인 id는 추가 못하게
+                          if (value == widget.userId) {
+                              controller.clear();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('자신의 ID는 추가할 수 없습니다.')),
+                              );
+                              return;
+                            }
                           // 멤버 id칸에 뭐 쓰면 빈 id칸 하나 추가. 다른 사람도 추가할 수 있게.
                           if (value.isNotEmpty &&
                               controller == _memberIdControllers.last) {
@@ -77,6 +86,7 @@ class _AddGroupScreenState extends State<AddGroupScreen> {
     String groupName = _groupNameController.text;
     String groupDescription = _groupDescriptionController.text;
     
+    // 빈 값이 아닌 멤버 ID만 필터링하여 리스트 생성
     List<String> memberIds = _memberIdControllers
         .where((controller) => controller.text.isNotEmpty)
         .map((controller) => controller.text)
@@ -87,9 +97,24 @@ class _AddGroupScreenState extends State<AddGroupScreen> {
       memberIds.insert(0, widget.userId!);
     }
 
-    await _eventService.createGroup(groupName, groupDescription, memberIds);
-    _showSuccessPopup(groupName);
+    try {
+      await _eventService.createGroup(groupName, groupDescription, memberIds);
+      
+      // 그룹 생성 성공 시 UserProvider의 fetchGroups 호출
+      if (mounted) {
+        final userProvider = Provider.of<UserProvider>(context, listen: false);
+        await userProvider.fetchGroups();
+        _showSuccessPopup(groupName);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('그룹 생성 중 오류가 발생했습니다.')),
+        );
+      }
+    }
   }
+
   // 성공 알리고 전 페이지로 돌아감
   void _showSuccessPopup(String groupName) {
     showDialog(
@@ -108,5 +133,16 @@ class _AddGroupScreenState extends State<AddGroupScreen> {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    // 컨트롤러들 해제
+    _groupNameController.dispose();
+    _groupDescriptionController.dispose();
+    for (var controller in _memberIdControllers) {
+      controller.dispose();
+    }
+    super.dispose();
   }
 }
