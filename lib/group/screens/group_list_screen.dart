@@ -86,8 +86,8 @@ class _GroupListScreenState extends State<GroupListScreen> {
                   itemCount: groups.length,
                   itemBuilder: (context, index) {
                     return GestureDetector(
-                      onTap: () {
-                        Navigator.push(
+                      onTap: () async {
+                        final groupsData = await Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => GroupDetailScreen(
@@ -97,6 +97,10 @@ class _GroupListScreenState extends State<GroupListScreen> {
                             ),
                           ),
                         );
+                        
+                        if (groupsData != null && groupsData is List<Map<String, dynamic>>) {
+                          Provider.of<UserProvider>(context, listen: false).updateGroups(groupsData);
+                        }
                       },
                       child: GroupCard(
                         group: groups[index],
@@ -178,17 +182,22 @@ class GroupSearchDelegate extends SearchDelegate {
               );
               
               return GestureDetector(
-                onTap: () {
-                  Navigator.push(
+                onTap: () async {
+                  final result = await Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => GroupDetailScreen(
                         group: group,
-                        userId: userId,
+                        userId: userId ?? '',
                         getUserProfile: getUserProfile,
                       ),
                     ),
                   );
+                  
+                  if (result != null && result is List<Map<String, dynamic>>) {
+                    // UserProvider를 통해 그룹 목록 업데이트
+                    Provider.of<UserProvider>(context, listen: false).updateGroups(result);
+                  }
                 },
                 child: GroupCard(
                   group: group,

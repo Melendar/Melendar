@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/group_model.dart';
 import '../models/user_profile.dart';
-import 'group_management_screen.dart';
-import '../../service/group_service.dart';
-import 'package:provider/provider.dart';
-import '../../user_manage/user_provider.dart';
+import '../widgets/group_card.dart';
 import '../../service/user_service.dart';
+import '../../service/group_service.dart';
+import '../../user_manage/user_provider.dart';
 
 class GroupDetailScreen extends StatefulWidget {
   final Group group;
@@ -25,18 +25,81 @@ class GroupDetailScreen extends StatefulWidget {
 
 class _GroupDetailScreenState extends State<GroupDetailScreen> {
   late Future<UserProfile?> _userProfileFuture;
+  late Group _group;
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _userProfileFuture = widget.getUserProfile(widget.userId);
+    _group = widget.group;
+    _nameController.text = _group.name;
+    _descriptionController.text = _group.description;
+  }
+
+  Future<void> _updateGroupInfo(String field) async {
+    final controller = field == 'name' ? _nameController : _descriptionController;
+    
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(field == 'name' ? '그룹명 수정' : '그룹 설명 수정'),
+        content: TextField(
+          controller: controller,
+          decoration: InputDecoration(
+            hintText: field == 'name' ? '새로운 그룹명 입력' : '새로운 그룹 설명 입력',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('취소'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: Text('저장'),
+          ),
+        ],
+      ),
+    );
+
+    if (result != null) {
+      try {
+        final groupService = GroupService();
+        await groupService.updateGroup(
+          _group.id,
+          widget.userId,
+          field == 'name' ? result : _group.name,
+          field == 'description' ? result : _group.description,
+        );
+
+        final updatedGroup = await groupService.fetchSingleGroup(_group.id);
+        if (updatedGroup != null) {
+          setState(() {
+            _group = updatedGroup;
+          });
+
+          final List<Map<String, dynamic>>? groupsData = 
+              await groupService.getGroupsByUser(widget.userId);
+          if (groupsData != null) {
+            Provider.of<UserProvider>(context, listen: false)
+                .updateGroups(groupsData);
+          }
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('그룹 정보 업데이트 중 오류가 발생했습니다.')),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.group.name),
+        title: Text(_group.name),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -44,26 +107,18 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
         actions: [
           IconButton(
             icon: Icon(Icons.person_add),
-            onPressed: () {
-              Navigator.push(
+            onPressed: () async {
+              final updatedGroup = await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>
-                      AddMemberScreen(groupId: widget.group.id),
+                  builder: (context) => AddMemberScreen(groupId: _group.id),
                 ),
               );
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.settings),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      GroupManagementScreen(group: widget.group),
-                ),
-              );
+              if (updatedGroup != null) {
+                setState(() {
+                  _group = updatedGroup;
+                });
+              }
             },
           ),
           IconButton(
@@ -86,16 +141,39 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  widget.group.name,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.teal,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _group.name,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.teal,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.edit, size: 20),
+                      onPressed: () => _updateGroupInfo('name'),
+                    ),
+                  ],
                 ),
                 SizedBox(height: 8),
-                Text(widget.group.description, style: TextStyle(fontSize: 16)),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _group.description,
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.edit, size: 20),
+                      onPressed: () => _updateGroupInfo('description'),
+                    ),
+                  ],
+                ),
                 SizedBox(height: 16),
                 FutureBuilder<UserProfile?>(
                   future: _userProfileFuture,
@@ -138,11 +216,10 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                 SizedBox(height: 16),
                 Expanded(
                   child: ListView.builder(
-                    itemCount: widget.group.members
-                        .where((id) => id != widget.userId)
-                        .length,
+                    itemCount:
+                        _group.members.where((id) => id != widget.userId).length,
                     itemBuilder: (context, index) {
-                      final memberId = widget.group.members
+                      final memberId = _group.members
                           .where((id) => id != widget.userId)
                           .toList()[index];
                       return FutureBuilder<UserProfile?>(
@@ -225,13 +302,35 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
               child: Text('아니오', style: TextStyle(color: Colors.blue)),
             ),
             ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () async {
+                try {
+                  final groupService = GroupService();
+                  await groupService.leaveGroup(_group.id, widget.userId);
+                  final List<Map<String, dynamic>>? groupsData =
+                      await groupService.getGroupsByUser(widget.userId);
+                  Navigator.of(context).pop(); // 다이얼로그 닫기
+                  Navigator.of(context).pop(groupsData); // 현재 화면을 닫으며 업데이트된 그룹 리스트 전달
+                } catch (e) {
+                  print("오류 발생: $e");
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("그룹 나가기 중 오류가 발생했습니다.")),
+                  );
+                  Navigator.of(context).pop(); // 다이얼로그만 닫기
+                }
+              },
               child: Text('네'),
             ),
           ],
         );
       },
     );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
   }
 }
 
@@ -250,7 +349,6 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
 
   void _searchUser() async {
     if (_searchController.text.isEmpty) return;
-
     final result = await fetchUserById(_searchController.text);
     setState(() {
       _searchResult = result;
@@ -279,13 +377,24 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
     );
 
     if (confirmed == true) {
-      final groupService = GroupService();
-      await groupService.addGroupMember(widget.groupId, [_searchResult!.id]);
-
-      final userProvider = Provider.of<UserProvider>(context, listen: false);
-      await userProvider.fetchGroups();
-
-      Navigator.pop(context);
+      try {
+        final groupService = GroupService();
+        await groupService.addGroupMember(
+            widget.groupId, [_searchResult!.id]);
+        
+        Group? updatedGroup =
+            await groupService.fetchSingleGroup(widget.groupId);
+        if (updatedGroup != null) {
+          Navigator.pop(context, updatedGroup);
+        } else {
+          throw Exception("Updated group not found");
+        }
+      } catch (e) {
+        print("오류 발생: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("그룹 정보 업데이트 중 오류가 발생했습니다.")),
+        );
+      }
     }
   }
 

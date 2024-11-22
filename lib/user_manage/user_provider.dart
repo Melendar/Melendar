@@ -66,7 +66,7 @@ class UserProvider with ChangeNotifier {
   // 그룹 변동사항 있을 때마다 백한테 데이터 새로 받으면 번거로움
   void addGroup(Map<String, dynamic> group) {
     _groups.add(group);
-    // 새 그룹 멤버들의 닉네임 가져오기
+    // 새 그룹 멤버들의 닉네임 업데이트
     List<String> members = List<String>.from(group['members']);
     for (String memberId in members) {
       if (!_memberNicknames.containsKey(memberId)) {
@@ -119,6 +119,11 @@ class UserProvider with ChangeNotifier {
     _profileImageUrl = '';
     _groups = [];
     _memberNicknames.clear();
+    notifyListeners();
+  }
+
+    void updateGroups(List<Map<String, dynamic>> newGroups) {
+    _groups = newGroups;
     notifyListeners();
   }
 }
