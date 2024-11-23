@@ -99,6 +99,15 @@ class _GroupListScreenState extends State<GroupListScreen> {
                         );
                         
                         if (groupsData != null && groupsData is List<Map<String, dynamic>>) {
+                          // 삭제된 그룹의 색상도 제거
+                          final newGroupIds = groupsData.map((g) => g['group_id'] as String).toSet();
+                          final oldGroupIds = userProvider.groups.map((g) => g['group_id'] as String).toSet();
+                          final removedGroupIds = oldGroupIds.difference(newGroupIds);
+                          
+                          for (String groupId in removedGroupIds) {
+                            userProvider.removeGroupColor(groupId);
+                          }
+                          
                           Provider.of<UserProvider>(context, listen: false).updateGroups(groupsData);
                         }
                       },
@@ -195,9 +204,18 @@ class GroupSearchDelegate extends SearchDelegate {
                   );
                   
                   if (result != null && result is List<Map<String, dynamic>>) {
-                    // UserProvider를 통해 그룹 목록 업데이트
+                    // 삭제된 그룹의 색상도 제거
+                    final newGroupIds = result.map((g) => g['group_id'] as String).toSet();
+                    final oldGroupIds = groups.map((g) => g['group_id'] as String).toSet();
+                    final removedGroupIds = oldGroupIds.difference(newGroupIds);
+                    
+                    for (String groupId in removedGroupIds) {
+                      userProvider.removeGroupColor(groupId);
+                    }
+                    
                     Provider.of<UserProvider>(context, listen: false).updateGroups(result);
                   }
+                  close(context, result);
                 },
                 child: GroupCard(
                   group: group,

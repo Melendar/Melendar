@@ -23,49 +23,62 @@ class _CalendarState extends State<Calendar> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadEvents();
+  // 그룹 정보가 없는 상태에서 이벤트를 로드하면 그룹 색상을 가져올 수 없음 (캘린더에 일정 표시 안 되던 문제 생김)
+  // 비동기 작업의 순서를 보장하기 위해 await 키워드 사용
+  // 즉 작업 순서는 중요하단 소리! 그룹정보 가져오기도 전에 ui 그려버리면 아무것도 안 뜬다
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      await userProvider.fetchGroups();  // 그룹 정보 먼저 로드
+      await _loadEvents();  // 이벤트 로드
     });
   }
 
-  Future<void> _loadEvents() async {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final userId = userProvider.user?.uid;
-    if (userId != null) {
-      _eventController.removeWhere((element) => true);
-      List<FirebaseEventData> events = await _eventService.getEventsByUser(userId);
-      for (var event in events) {
+Future<void> _loadEvents() async {
+  final userProvider = Provider.of<UserProvider>(context, listen: false);
+  final userId = userProvider.user?.uid;
+  // userProvider.groups.isNotEmpty 체크를 통해 그룹 정보 로드 완료 보장
+  if (userId != null && userProvider.groups.isNotEmpty) {
+    _eventController.removeWhere((element) => true);
+    List<FirebaseEventData> events = await _eventService.getEventsByUser(userId);
+    for (var event in events) {
+      // 선택된 그룹의 일정만 표시
+      if (userProvider.isGroupSelected(event.groupId)) {
+        Color eventColor = userProvider.getGroupColor(event.groupId);
         _eventController.add(
           CalendarEventData(
             title: event.title,
             date: event.date,
             event: event,
+            color: eventColor,
           ),
         );
       }
     }
   }
+}
 
-  @override
-  Widget build(BuildContext context) {
-    return CalendarControllerProvider(
-      controller: _eventController,
-      child: Scaffold(
-        appBar: AppBar(
-          leading: 
-          IconButton(
+@override
+Widget build(BuildContext context) {
+  return CalendarControllerProvider(
+    controller: _eventController,
+    child: Scaffold(
+      drawer: _buildGroupFilterDrawer(),
+      appBar: AppBar(
+        leading: Builder(
+          builder: (context) => IconButton(
             icon: Icon(Icons.menu),
             onPressed: () {
               Scaffold.of(context).openDrawer();
             },
           ),
-          actions: [
-            IconButton(
-              icon: Icon(Icons.refresh),
-              onPressed: () {
-                _loadEvents();
-              },
-            ),
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: () {
+              _loadEvents();
+            },
+          ),
             IconButton(
               icon: Icon(Icons.search),
               onPressed: () {
@@ -82,9 +95,18 @@ class _CalendarState extends State<Calendar> {
             : _error != null
                 ? Center(child: Text('오류 발생: $_error'))
                 : MonthView(
-                    headerStyle: HeaderStyle(decoration: BoxDecoration(color: Colors.white)),
+                    headerStyle: HeaderStyle(
+                        decoration: BoxDecoration(color: Colors.white)),
                     weekDayStringBuilder: (p0) {
-                      List<String> weekDays = ['월', '화', '수', '목', '금', '토', '일'];
+                      List<String> weekDays = [
+                        '월',
+                        '화',
+                        '수',
+                        '목',
+                        '금',
+                        '토',
+                        '일'
+                      ];
                       return weekDays[p0 % 7];
                     },
                     headerStringBuilder: (date, {secondaryDate}) {
@@ -106,18 +128,19 @@ class _CalendarState extends State<Calendar> {
     );
   }
 
-  void _showAddEventDialog(BuildContext context) {
-    String task = '';
-    DateTime selectedDate = DateTime.now();
-    String? selectedGroupId;
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final groups = userProvider.groups;
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
+void _showAddEventDialog(BuildContext context, [DateTime? initialDate]) {
+  String task = '';
+  DateTime selectedDate = initialDate ?? DateTime.now();  // 선택된 날짜 사용
+  String? selectedGroupId;
+  final userProvider = Provider.of<UserProvider>(context, listen: false);
+  final groups = userProvider.groups;
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return StatefulBuilder(
+        builder: (context, setState) {
+          return AlertDialog(
               title: Text('새 일정 추가'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -125,8 +148,6 @@ class _CalendarState extends State<Calendar> {
                   TextField(
                     onChanged: (value) => task = value,
                     decoration: InputDecoration(labelText: '일정'),
-                    keyboardType: TextInputType.text,
-                    textInputAction: TextInputAction.done,
                   ),
                   SizedBox(height: 16),
                   ElevatedButton(
@@ -138,7 +159,7 @@ class _CalendarState extends State<Calendar> {
                         firstDate: DateTime(2000),
                         lastDate: DateTime(2101),
                       );
-                      if (picked != null && picked != selectedDate) {
+                      if (picked != null) {
                         setState(() {
                           selectedDate = picked;
                         });
@@ -164,36 +185,108 @@ class _CalendarState extends State<Calendar> {
                 ],
               ),
               actions: <Widget>[
-                TextButton(
-                  child: Text('취소'),
-                  onPressed: () => Navigator.of(context).pop(),
+              TextButton(
+                child: Text('취소'),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              TextButton(
+                child: Text('추가'),
+                onPressed: () async {
+                  if (task.isNotEmpty && selectedGroupId != null) {
+                    await _eventService.createEvent(selectedGroupId!, task, selectedDate);
+                    await _loadEvents();
+                    Navigator.of(context).pop();
+                    // 현재 표시된 모든 다이얼로그를 닫고 새로운 팝업 표시
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                    _showEventPopup(context, _eventController.getEventsOnDay(selectedDate), selectedDate);
+                  }
+                },
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+}
+  Widget _buildGroupFilterDrawer() {
+  return Consumer<UserProvider>(
+    builder: (context, userProvider, child) {
+      return Drawer(
+        child: Column(
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(color: Colors.black),
+              child: Center(
+                child: Text(
+                  '그룹 필터',
+                  style: TextStyle(color: Colors.white, fontSize: 24),
                 ),
-                TextButton(
-                  child: Text('추가'),
-                  onPressed: () async {
-                    if (task.isNotEmpty && selectedGroupId != null) {
-                      await _eventService.createEvent(selectedGroupId!, task, selectedDate);
-                      await _loadEvents();
-                      Navigator.of(context).pop();
-                    }
-                  },
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
+              ),
+            ),
+            ListTile(
+              title: Text('전체 선택'),
+              trailing: IconButton(
+                icon: Icon(Icons.select_all),
+                onPressed: () {
+                  userProvider.selectAllGroups();
+                  _loadEvents();
+                  Navigator.pop(context);
+                },
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: userProvider.groups.length,
+                itemBuilder: (context, index) {
+                  final group = userProvider.groups[index];
+                  final groupId = group['group_id'] as String;
+                  return ListTile(
+                    leading: Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: userProvider.getGroupColor(groupId),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    title: Text(group['group_name']),
+                    trailing: Checkbox(
+                      value: userProvider.isGroupSelected(groupId),
+                      onChanged: (bool? value) {
+                        userProvider.toggleGroupSelection(groupId);
+                        _loadEvents();
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
 
-  void _showEventPopup(BuildContext context, List<CalendarEventData<Object?>> events, DateTime date) {
+  void _showEventPopup(BuildContext context,
+      List<CalendarEventData<Object?>> events, DateTime date) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text(DateFormat('yyyy-MM-dd').format(date)),
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(DateFormat('yyyy-MM-dd').format(date)),
+                  IconButton(
+                    icon: Icon(Icons.add),
+                    onPressed: () => _showAddEventDialog(context, date),
+                  ),
+                ],
+              ),
               content: FutureBuilder(
                 future: _loadEvents(),
                 builder: (context, snapshot) {
@@ -202,25 +295,29 @@ class _CalendarState extends State<Calendar> {
                     return events.isNotEmpty
                         ? Column(
                             mainAxisSize: MainAxisSize.min,
-                            children: events.map((event) => ListTile(
-                              title: Text(event.title),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: Icon(Icons.edit),
-                                    onPressed: () => _showUpdateEventDialog(context, event),
-                                  ),
-                                  IconButton(
-                                    icon: Icon(Icons.delete),
-                                    onPressed: () async {
-                                      await _deleteEvent(event);
-                                      setState(() {});
-                                    },
-                                  ),
-                                ],
-                              ),
-                            )).toList(),
+                            children: events
+                                .map((event) => ListTile(
+                                      title: Text(event.title),
+                                      trailing: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          IconButton(
+                                            icon: Icon(Icons.edit),
+                                            onPressed: () =>
+                                                _showUpdateEventDialog(
+                                                    context, event),
+                                          ),
+                                          IconButton(
+                                            icon: Icon(Icons.delete),
+                                            onPressed: () async {
+                                              await _deleteEvent(event);
+                                              setState(() {});
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ))
+                                .toList(),
                           )
                         : Text("이 날짜에는 일정이 없습니다.");
                   } else {
@@ -243,7 +340,8 @@ class _CalendarState extends State<Calendar> {
     );
   }
 
-  void _showUpdateEventDialog(BuildContext context, CalendarEventData<Object?> event) {
+  void _showUpdateEventDialog(
+      BuildContext context, CalendarEventData<Object?> event) {
     String newTask = event.title;
     showDialog(
       context: context,
@@ -266,12 +364,15 @@ class _CalendarState extends State<Calendar> {
               child: Text('수정'),
               onPressed: () async {
                 if (newTask.isNotEmpty) {
-                  FirebaseEventData firebaseEvent = event.event as FirebaseEventData;
-                  await _eventService.updateEvent(firebaseEvent.groupId, firebaseEvent.id, newTask);
+                  FirebaseEventData firebaseEvent =
+                      event.event as FirebaseEventData;
+                  await _eventService.updateEvent(
+                      firebaseEvent.groupId, firebaseEvent.id, newTask);
                   await _loadEvents();
                   Navigator.of(context).pop();
                   Navigator.of(context).pop();
-                  _showEventPopup(context, _eventController.getEventsOnDay(event.date), event.date);
+                  _showEventPopup(context,
+                      _eventController.getEventsOnDay(event.date), event.date);
                 }
               },
             ),
@@ -282,11 +383,35 @@ class _CalendarState extends State<Calendar> {
   }
 
   Future<void> _deleteEvent(CalendarEventData<Object?> event) async {
-    FirebaseEventData firebaseEvent = event.event as FirebaseEventData;
-    await _eventService.deleteEvent(firebaseEvent.groupId, firebaseEvent.id);
-    await _loadEvents();
+    final bool? shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('일정 삭제'),
+          content: Text('정말로 이 일정을 삭제하시겠습니까?'),
+          actions: <Widget>[
+            TextButton(
+              child: Text('취소'),
+              onPressed: () => Navigator.of(context).pop(false),
+            ),
+            TextButton(
+              child: Text('삭제'),
+              onPressed: () => Navigator.of(context).pop(true),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete == true) {
+      FirebaseEventData firebaseEvent = event.event as FirebaseEventData;
+      await _eventService.deleteEvent(firebaseEvent.groupId, firebaseEvent.id);
+      await _loadEvents();
+    }
   }
 }
+
+
 
 class _EventSearchDelegate extends SearchDelegate {
   final EventController eventController;
@@ -346,7 +471,7 @@ class _EventSearchDelegate extends SearchDelegate {
           title: Text(event.title),
           subtitle: Text(DateFormat('yyyy-MM-dd').format(event.date)),
           onTap: () {
-            // 이벤트 상세 정보를 보여주거나 해당 날짜로 이동하는 등의 동작 추가
+            // 검색 결과 누르면 뭐 할건지. 아무것도 안 해도 되긴 함 나중에 생각
           },
         );
       },

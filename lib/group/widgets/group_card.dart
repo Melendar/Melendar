@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/group_model.dart';
 import '../models/user_profile.dart';
+import '../../user_manage/user_provider.dart';
 
 class GroupCard extends StatelessWidget {
   final Group group;
@@ -14,17 +16,27 @@ class GroupCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+    final groupColor = userProvider.getGroupColor(group.id);
+    
     return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+        side: BorderSide(color: groupColor, width: 1),
+      ),
       margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              group.name,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Row(
+              children: [
+                  Text(
+                    group.name,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: groupColor),
+                  ),
+              ],
             ),
             SizedBox(height: 8),
             Text(group.description),
