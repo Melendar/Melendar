@@ -63,11 +63,17 @@ class Profile extends State<RegistProfile> {
   }
 
   Future<void> _updateNickname() async {
-    await updateNickname(_newNickname, (nickname) {
-      setState(() {
-        _nickname = nickname;
+    if (_newNickname.isNotEmpty) {
+      await updateNickname(_newNickname, (nickname) {
+        setState(() {
+          _nickname = nickname;
+        });
       });
-    });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("새 닉네임을 입력하세요.")),
+      );
+    }
   }
 
   Future<void> _updateProfileImage() async {
@@ -84,9 +90,11 @@ class Profile extends State<RegistProfile> {
     }
   }
 
-  // 클립보드에 유저 ID 복사
   void _copyUserIdToClipboard(String userId) {
     Clipboard.setData(ClipboardData(text: userId));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("유저 ID가 클립보드에 복사되었습니다.")),
+    );
   }
 
   @override
@@ -100,24 +108,91 @@ class Profile extends State<RegistProfile> {
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Column(
                     children: [
-                      CircleAvatar(
-                        backgroundImage: NetworkImage(
-                          '$_profileImageUrl?timestamp=${DateTime.now().millisecondsSinceEpoch}',
-                        ),
-                        radius: 40,
+                      Stack(
+                        children: [
+                          CircleAvatar(
+                            backgroundImage: NetworkImage(
+                              '$_profileImageUrl?timestamp=${DateTime.now().millisecondsSinceEpoch}',
+                            ),
+                            radius: 60,
+                          ),
+                          Positioned(
+                            right: 0,
+                            bottom: 0,
+                            child: GestureDetector(
+                              onTap: _updateProfileImage,
+                              child: Container(
+                                width: 30,
+                                height: 30,
+                                decoration: BoxDecoration(
+                                  color: Colors.blue,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.edit,
+                                  size: 18,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 16),
-                      Text(
-                        '닉네임: $_nickname',
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            '닉네임: $_nickname',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: const Text("닉네임 변경"),
+                                    content: TextField(
+                                      decoration: const InputDecoration(
+                                          hintText: "새 닉네임을 입력하세요"),
+                                      onChanged: (value) => _newNickname = value,
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                        },
+                                        child: const Text("취소"),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                          _updateNickname();
+                                        },
+                                        child: const Text("확인"),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            },
+                            icon: const Icon(Icons.edit, size: 18),
+                            tooltip: "닉네임 변경",
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 4),
                       Row(
@@ -141,19 +216,6 @@ class Profile extends State<RegistProfile> {
                             tooltip: "ID 복사",
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 16),
-                      TextField(
-                        decoration: const InputDecoration(labelText: '새 닉네임'),
-                        onChanged: (value) => _newNickname = value,
-                      ),
-                      ElevatedButton(
-                        onPressed: _updateNickname,
-                        child: const Text('닉네임 변경'),
-                      ),
-                      ElevatedButton(
-                        onPressed: _updateProfileImage,
-                        child: const Text('프로필 이미지 변경'),
                       ),
                     ],
                   ),
