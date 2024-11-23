@@ -135,14 +135,15 @@ class UserProvider with ChangeNotifier {
   // 색 설정 관련 코드들 추가!
   Map<String, Color> _groupColors = {};
 final List<Color> _availableColors = [
-  Colors.blue,
-  Colors.red,
-  Colors.green,
-  Colors.orange,
-  Colors.purple,
-  Colors.teal,
-  Colors.pink,
-  Colors.indigo,
+  Color(0xFFfd7f6f), 
+  Color(0xFF7eb0d5), 
+  Color(0xFFb2e061), 
+  Color(0xFFbd7ebe), 
+  Color(0xFFffb55a), 
+  Color(0xFFffee65), 
+  Color(0xFFbeb9db), 
+  Color(0xFFfdcce5), 
+  Color(0xFF8bd3c7), 
 ];
 Set<Color> _usedColors = {};
 

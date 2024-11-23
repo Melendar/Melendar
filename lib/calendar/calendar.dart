@@ -28,24 +28,27 @@ class _CalendarState extends State<Calendar> {
     });
   }
 
-  Future<void> _loadEvents() async {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final userId = userProvider.user?.uid;
-    if (userId != null) {
-      _eventController.removeWhere((element) => true);
-      List<FirebaseEventData> events =
-          await _eventService.getEventsByUser(userId);
-      for (var event in events) {
-        _eventController.add(
-          CalendarEventData(
-            title: event.title,
-            date: event.date,
-            event: event,
-          ),
-        );
-      }
+Future<void> _loadEvents() async {
+  final userProvider = Provider.of<UserProvider>(context, listen: false);
+  final userId = userProvider.user?.uid;
+  if (userId != null) {
+    _eventController.removeWhere((element) => true);
+    List<FirebaseEventData> events = await _eventService.getEventsByUser(userId);
+    for (var event in events) {
+      // 그룹 색상 가져오기
+      Color eventColor = userProvider.getGroupColor(event.groupId);
+      
+      _eventController.add(
+        CalendarEventData(
+          title: event.title,
+          date: event.date,
+          event: event,
+          color: eventColor, // 그룹 색상 적용
+        ),
+      );
     }
   }
+}
 
   @override
   Widget build(BuildContext context) {
