@@ -1,7 +1,12 @@
+import 'dart:ui';
+
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import '../service/group_service.dart';
 import '../service/user_service.dart';
+
+// group model이나 이 provider 쓰느라 코드가 꽤 꼬임... 
 
 class UserProvider with ChangeNotifier {
   User? _user;
@@ -126,4 +131,60 @@ class UserProvider with ChangeNotifier {
     _groups = newGroups;
     notifyListeners();
   }
+
+  // 색 설정 관련 코드들 추가!
+  Map<String, Color> _groupColors = {};
+final List<Color> _availableColors = [
+  Colors.blue,
+  Colors.red,
+  Colors.green,
+  Colors.orange,
+  Colors.purple,
+  Colors.teal,
+  Colors.pink,
+  Colors.indigo,
+];
+Set<Color> _usedColors = {};
+
+// 그룹 색상 getter
+Map<String, Color> get groupColors => _groupColors;
+
+// 그룹 색상 가져오기
+Color getGroupColor(String groupId) {
+  if (!_groupColors.containsKey(groupId)) {
+    // 사용 가능한 색상 중에서 선택
+    Color newColor = _getNextAvailableColor();
+    _groupColors[groupId] = newColor;
+    _usedColors.add(newColor);
+  }
+  return _groupColors[groupId]!;
+}
+
+// 사용 가능한 다음 색상 가져오기
+Color _getNextAvailableColor() {
+  // 모든 색상이 사용된 경우 초기화
+  if (_usedColors.length >= _availableColors.length) {
+    _usedColors.clear();
+  }
+  
+  // 사용되지 않은 색상 찾기
+  for (Color color in _availableColors) {
+    if (!_usedColors.contains(color)) {
+      return color;
+    }
+  }
+  
+  // 만약을 위한 폴백 (일어나선 안 됨)
+  return _availableColors[0];
+}
+
+// 그룹이 삭제될 때 색상도 제거
+void removeGroupColor(String groupId) {
+  if (_groupColors.containsKey(groupId)) {
+    _usedColors.remove(_groupColors[groupId]);
+    _groupColors.remove(groupId);
+  }
+}
+
+
 }
