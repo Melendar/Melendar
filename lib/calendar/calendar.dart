@@ -35,40 +35,44 @@ Future<void> _loadEvents() async {
     _eventController.removeWhere((element) => true);
     List<FirebaseEventData> events = await _eventService.getEventsByUser(userId);
     for (var event in events) {
-      // 그룹 색상 가져오기
-      Color eventColor = userProvider.getGroupColor(event.groupId);
-      
-      _eventController.add(
-        CalendarEventData(
-          title: event.title,
-          date: event.date,
-          event: event,
-          color: eventColor, // 그룹 색상 적용
-        ),
-      );
+      // 선택된 그룹의 일정만 표시
+      if (userProvider.isGroupSelected(event.groupId)) {
+        Color eventColor = userProvider.getGroupColor(event.groupId);
+        _eventController.add(
+          CalendarEventData(
+            title: event.title,
+            date: event.date,
+            event: event,
+            color: eventColor,
+          ),
+        );
+      }
     }
   }
 }
 
-  @override
-  Widget build(BuildContext context) {
-    return CalendarControllerProvider(
-      controller: _eventController,
-      child: Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
+@override
+Widget build(BuildContext context) {
+  return CalendarControllerProvider(
+    controller: _eventController,
+    child: Scaffold(
+      drawer: _buildGroupFilterDrawer(),
+      appBar: AppBar(
+        leading: Builder(
+          builder: (context) => IconButton(
             icon: Icon(Icons.menu),
             onPressed: () {
               Scaffold.of(context).openDrawer();
             },
           ),
-          actions: [
-            IconButton(
-              icon: Icon(Icons.refresh),
-              onPressed: () {
-                _loadEvents();
-              },
-            ),
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: () {
+              _loadEvents();
+            },
+          ),
             IconButton(
               icon: Icon(Icons.search),
               onPressed: () {
@@ -195,6 +199,65 @@ void _showAddEventDialog(BuildContext context, [DateTime? initialDate]) {
             ],
           );
         },
+      );
+    },
+  );
+}
+  Widget _buildGroupFilterDrawer() {
+  return Consumer<UserProvider>(
+    builder: (context, userProvider, child) {
+      return Drawer(
+        child: Column(
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(color: Colors.black),
+              child: Center(
+                child: Text(
+                  '그룹 필터',
+                  style: TextStyle(color: Colors.white, fontSize: 24),
+                ),
+              ),
+            ),
+            ListTile(
+              title: Text('전체 선택'),
+              trailing: IconButton(
+                icon: Icon(Icons.select_all),
+                onPressed: () {
+                  userProvider.selectAllGroups();
+                  _loadEvents();
+                  Navigator.pop(context);
+                },
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: userProvider.groups.length,
+                itemBuilder: (context, index) {
+                  final group = userProvider.groups[index];
+                  final groupId = group['group_id'] as String;
+                  return ListTile(
+                    leading: Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: userProvider.getGroupColor(groupId),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    title: Text(group['group_name']),
+                    trailing: Checkbox(
+                      value: userProvider.isGroupSelected(groupId),
+                      onChanged: (bool? value) {
+                        userProvider.toggleGroupSelection(groupId);
+                        _loadEvents();
+                      },
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       );
     },
   );
@@ -341,6 +404,8 @@ void _showAddEventDialog(BuildContext context, [DateTime? initialDate]) {
     }
   }
 }
+
+
 
 class _EventSearchDelegate extends SearchDelegate {
   final EventController eventController;
