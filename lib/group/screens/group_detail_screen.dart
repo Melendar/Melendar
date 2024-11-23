@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/group_model.dart';
 import '../models/user_profile.dart';
-import '../widgets/group_card.dart';
 import '../../service/user_service.dart';
 import '../../service/group_service.dart';
 import '../../user_manage/user_provider.dart';
@@ -102,7 +101,12 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
         title: Text(_group.name),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () async {
+            final groupService = GroupService();            
+            final List<Map<String, dynamic>>? groupsData =
+                await groupService.getGroupsByUser(widget.userId);
+            Navigator.pop(context, groupsData);
+            },
         ),
         actions: [
           IconButton(
