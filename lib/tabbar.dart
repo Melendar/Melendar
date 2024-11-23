@@ -54,12 +54,12 @@ final _navBarItems = [
   SalomonBottomBarItem(
     icon: const Icon(Icons.note),
     title: const Text("메모"),
-    selectedColor: Colors.blueAccent,
+    selectedColor: Colors.indigo,
   ),
   SalomonBottomBarItem(
     icon: const Icon(Icons.group_outlined),
     title: const Text("그룹"),
-    selectedColor: Colors.orange,
+    selectedColor: Colors.deepPurple,
   ),
   SalomonBottomBarItem(
     icon: const Icon(Icons.person),

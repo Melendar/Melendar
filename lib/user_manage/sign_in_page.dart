@@ -6,6 +6,8 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'user_provider.dart';
 import '../tabbar.dart';
 import '../service/group_service.dart';
+//mport 'package:flutter_signin_button/flutter_signin_button.dart';
+import 'package:custom_signin_buttons/custom_signin_buttons.dart';
 
 class SignInPage extends StatelessWidget {
   SignInPage({Key? key}) : super(key: key);
@@ -59,7 +61,6 @@ class SignInPage extends StatelessWidget {
       print("Google 로그인 오류: $e");
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return FutureBuilder(
@@ -81,8 +82,10 @@ class SignInPage extends StatelessWidget {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            Color(0xFFB3E5FC),
-                            Color(0xFFE1F5FE),
+                            Color(0xEBF6FB),
+                            Color(0xFFFFFFFF),
+                            Color(0x80FFFFFF),
+
                           ],
                         ),
                       ),
@@ -97,22 +100,20 @@ class SignInPage extends StatelessWidget {
                               color: Colors.black,
                             ),
                           ),
-                          const SizedBox(height: 20),
-                          ElevatedButton(
+                          //const SizedBox(height: 20),
+
+                          SignInButton(
+                            button: Button.GoogleBlack,
+                            borderRadius: 15,
+
+                            mini: false,
                             onPressed: () => _signIn(context),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: Colors.black,
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 40, vertical: 15),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                            ),
-                            child: const Text(
-                              'Sign in',
-                              style: TextStyle(fontSize: 18),
-                            ),
+                            splashColor: Colors.white,
+                            small: false,
+                            // textColor: Colors.blue,
+                            showText: true,
+                            textSize: 15,
+                            width: 320,
                           ),
                         ],
                       ),

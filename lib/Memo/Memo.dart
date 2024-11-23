@@ -20,6 +20,7 @@ class _MemoState extends State<Memo> {
   final Set<String> _selectedMemos = {};
   String _searchQuery = ''; // 검색어 저장
   bool _isSearching = false; // 검색 활성화 상태
+  List<Map<String, dynamic>> _memos = []; // 필터링된 메모 저장
 
   @override
   void initState() {
@@ -96,20 +97,64 @@ class _MemoState extends State<Memo> {
           },
         ),
         if (_isSelectionMode)
+          TextButton(
+            onPressed: () {
+              setState(() {
+                if (_selectedMemos.length == _memos.length) {
+                  // 모든 선택 해제
+                  _selectedMemos.clear();
+                } else {
+                  // 모든 선택
+                  _selectedMemos
+                    ..clear() // 기존 선택 초기화
+                    ..addAll(_memos.map((memo) => memo['memoId'])); // 표시된 메모 선택
+                }
+              });
+            },
+            child: Text(
+              _selectedMemos.length == _memos.length ? '전체 해제' : '전체 선택',
+              style: const TextStyle(color: Colors.black), // AppBar에 맞는 텍스트 스타일
+            ),
+          ),
+
+
+        if (_isSelectionMode)
           IconButton(
             icon: const Icon(Icons.delete),
             onPressed: _selectedMemos.isEmpty
                 ? null
                 : () async {
-              for (var memoId in _selectedMemos) {
-                await _firestore
-                    .collection('Users')
-                    .doc(_userId)
-                    .collection('Memos')
-                    .doc(memoId)
-                    .delete();
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    title: const Text('메모 삭제'),
+                    content: const Text('선택한 메모를 정말 삭제하시겠습니까?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false), // 취소
+                        child: const Text('취소'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(true), // 확인
+                        child: const Text('확인'),
+                      ),
+                    ],
+                  );
+                },
+              );
+
+              if (confirm == true) {
+                for (var memoId in _selectedMemos) {
+                  await _firestore
+                      .collection('Users')
+                      .doc(_userId)
+                      .collection('Memos')
+                      .doc(memoId)
+                      .delete();
+                }
+                _toggleSelectionMode();
               }
-              _toggleSelectionMode();
             },
           ),
       ];
@@ -149,9 +194,10 @@ class _MemoState extends State<Memo> {
             );
           }
 
-          // 검색 적용
-          final memos = snapshot.data!
-              .where((memo) => memo['title']
+          // 데이터 로드 완료 시 _memos 업데이트
+          final filteredMemos = snapshot.data!
+              .where((memo) =>
+          memo['title']
               .toLowerCase()
               .contains(_searchQuery.toLowerCase()) ||
               memo['content']
@@ -159,10 +205,13 @@ class _MemoState extends State<Memo> {
                   .contains(_searchQuery.toLowerCase()))
               .toList();
 
+          // _memos를 이미 변경된 상태로 사용
+          _memos = filteredMemos;
+
           return ListView.builder(
-            itemCount: memos.length,
+            itemCount: _memos.length,
             itemBuilder: (context, index) {
-              final memo = memos[index];
+              final memo = _memos[index];
               final memoId = memo['memoId'];
               final title = memo['title'];
               final content = memo['content'];
@@ -170,7 +219,8 @@ class _MemoState extends State<Memo> {
               final isSelected = _selectedMemos.contains(memoId);
 
               return Card(
-                margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                margin: const EdgeInsets.symmetric(
+                    vertical: 8.0, horizontal: 16.0),
                 child: ListTile(
                   leading: _isSelectionMode
                       ? Checkbox(
@@ -201,12 +251,13 @@ class _MemoState extends State<Memo> {
                       final result = await Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => MemoEditScreen(
-                            userId: _userId!,
-                            memoId: memoId,
-                            initialTitle: title,
-                            initialContent: content,
-                          ),
+                          builder: (context) =>
+                              MemoEditScreen(
+                                userId: _userId!,
+                                memoId: memoId,
+                                initialTitle: title,
+                                initialContent: content,
+                              ),
                         ),
                       );
                       if (result == true) {
@@ -239,14 +290,15 @@ class _MemoState extends State<Memo> {
           ),
           ActionButton(
             onPressed: _toggleSelectionMode,
-            icon: Icon(_isSelectionMode ? Icons.close : Icons.check_circle_outline_sharp),
+            icon: Icon(
+                _isSelectionMode ? Icons.close : Icons
+                    .check_circle_outline_sharp),
           ),
         ],
       ),
     );
   }
 }
-
 
 @immutable
 class ExpandableFab extends StatefulWidget {

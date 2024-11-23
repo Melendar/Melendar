@@ -43,6 +43,8 @@ dependencies:
   firebase_storage: ^12.3.5
   file_picker: ^5.2.6
   provider: ^6.0.5
+  #flutter_signin_button: ^2.0.0 #signup 패키지
+  custom_signin_buttons: ^1.0.2
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

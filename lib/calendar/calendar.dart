@@ -120,11 +120,15 @@ Widget build(BuildContext context) {
                       _showEventPopup(context, [event], date);
                     },
                   ),
-        floatingActionButton: FloatingActionButton(
-          child: Icon(Icons.add),
-          onPressed: () => _showAddEventDialog(context),
-        ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white, // 아이콘 색상
+// 배경색 검은색
+        child: const Icon(Icons.add), // 아이콘 색상 흰색
+        onPressed: () => _showAddEventDialog(context),
       ),
+
+    ),
     );
   }
 
