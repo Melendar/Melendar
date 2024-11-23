@@ -23,15 +23,21 @@ class _CalendarState extends State<Calendar> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadEvents();
+  // 그룹 정보가 없는 상태에서 이벤트를 로드하면 그룹 색상을 가져올 수 없음 (캘린더에 일정 표시 안 되던 문제 생김)
+  // 비동기 작업의 순서를 보장하기 위해 await 키워드 사용
+  // 즉 작업 순서는 중요하단 소리! 그룹정보 가져오기도 전에 ui 그려버리면 아무것도 안 뜬다
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      await userProvider.fetchGroups();  // 그룹 정보 먼저 로드
+      await _loadEvents();  // 이벤트 로드
     });
   }
 
 Future<void> _loadEvents() async {
   final userProvider = Provider.of<UserProvider>(context, listen: false);
   final userId = userProvider.user?.uid;
-  if (userId != null) {
+  // userProvider.groups.isNotEmpty 체크를 통해 그룹 정보 로드 완료 보장
+  if (userId != null && userProvider.groups.isNotEmpty) {
     _eventController.removeWhere((element) => true);
     List<FirebaseEventData> events = await _eventService.getEventsByUser(userId);
     for (var event in events) {
