@@ -84,23 +84,22 @@ class SignInPage extends StatelessWidget {
                           colors: [
                             Color(0xEBF6FB),
                             Color(0xFFFFFFFF),
-                            Color(0x80FFFFFF),
-
                           ],
                         ),
                       ),
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.start,
                         children: [
+                          const SizedBox(height: 350), // MELENDAR를 더 위로 이동
                           const Text(
                             'MELENDAR',
                             style: TextStyle(
-                              fontSize: 32,
+                              fontSize: 43,
                               fontWeight: FontWeight.bold,
                               color: Colors.black,
                             ),
                           ),
-                          //const SizedBox(height: 20),
+                          const SizedBox(height: 150),
 
                           SignInButton(
                             button: Button.GoogleBlack,
