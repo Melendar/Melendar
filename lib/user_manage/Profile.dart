@@ -22,7 +22,11 @@ class Profile extends State<RegistProfile> {
 
   @override
   void initState() {
-    super.initState();
+    super.initState();@override
+    void initState() {
+      super.initState();
+      _initializeUser();
+    }
     _initializeUser();
   }
 
