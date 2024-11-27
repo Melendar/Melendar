@@ -58,29 +58,22 @@ class _CalendarState extends State<Calendar> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return CalendarControllerProvider(
-      controller: _eventController,
-      child: Scaffold(
-        drawer: _buildGroupFilterDrawer(),
-        appBar: AppBar(
-          backgroundColor: Colors.white, // 상단바 색상을 흰색으로 설정
-          leading: Builder(
-            builder: (context) => IconButton(
-              icon: Icon(Icons.menu),
-              onPressed: () {
-                Scaffold.of(context).openDrawer();
-              },
-            ),
+@override
+Widget build(BuildContext context) {
+  return CalendarControllerProvider(
+    controller: _eventController,
+    child: Scaffold(
+      endDrawer: _buildGroupFilterDrawer(),
+      appBar: AppBar(
+        backgroundColor: Colors.white, // 상단바 색상을 흰색으로 설정
+        title: Text("캘린더"),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: () {
+              _loadEvents();
+            },
           ),
-          actions: [
-            IconButton(
-              icon: Icon(Icons.refresh),
-              onPressed: () {
-                _loadEvents();
-              },
-            ),
             IconButton(
               icon: Icon(Icons.search),
               onPressed: () {
@@ -90,6 +83,14 @@ class _CalendarState extends State<Calendar> {
                 );
               },
             ),
+            Builder(
+            builder: (context) => IconButton(
+              icon: Icon(Icons.menu),
+              onPressed: () {
+                Scaffold.of(context).openEndDrawer(); // endDrawer 열기
+              },
+            ),
+          ),
           ],
         ),
         body: _isLoading
