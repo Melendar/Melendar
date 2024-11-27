@@ -15,7 +15,8 @@ class AddGroupScreen extends StatefulWidget {
 class _AddGroupScreenState extends State<AddGroupScreen> {
   final GroupService _eventService = GroupService();
   final TextEditingController _groupNameController = TextEditingController();
-  final TextEditingController _groupDescriptionController = TextEditingController();
+  final TextEditingController _groupDescriptionController =
+      TextEditingController();
   List<TextEditingController> _memberIdControllers = [];
 
   @override
@@ -27,7 +28,10 @@ class _AddGroupScreenState extends State<AddGroupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('그룹 추가')),
+      appBar: AppBar(
+        backgroundColor: Colors.white, // 상단바 색상을 흰색으로 설정
+        title: Text('그룹 추가')),
+      backgroundColor: Colors.white, // 배경을 흰색으로 설정
       body: Padding(
         padding: EdgeInsets.all(16.0),
         child: SingleChildScrollView(
@@ -50,12 +54,12 @@ class _AddGroupScreenState extends State<AddGroupScreen> {
                         onChanged: (value) {
                           // 본인 id는 추가 못하게
                           if (value == widget.userId) {
-                              controller.clear();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('자신의 ID는 추가할 수 없습니다.')),
-                              );
-                              return;
-                            }
+                            controller.clear();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('자신의 ID는 추가할 수 없습니다.')),
+                            );
+                            return;
+                          }
                           // 멤버 id칸에 뭐 쓰면 빈 id칸 하나 추가. 다른 사람도 추가할 수 있게.
                           if (value.isNotEmpty &&
                               controller == _memberIdControllers.last) {
@@ -85,13 +89,13 @@ class _AddGroupScreenState extends State<AddGroupScreen> {
   void _createGroup() async {
     String groupName = _groupNameController.text;
     String groupDescription = _groupDescriptionController.text;
-    
+
     // 빈 값이 아닌 멤버 ID만 필터링하여 리스트 생성
     List<String> memberIds = _memberIdControllers
         .where((controller) => controller.text.isNotEmpty)
         .map((controller) => controller.text)
         .toList();
-    
+
     // 현재 사용자 ID를 멤버 목록에 추가 (중복 방지)
     if (widget.userId != null && !memberIds.contains(widget.userId)) {
       memberIds.insert(0, widget.userId!);
@@ -99,7 +103,7 @@ class _AddGroupScreenState extends State<AddGroupScreen> {
 
     try {
       await _eventService.createGroup(groupName, groupDescription, memberIds);
-      
+
       // 그룹 생성 성공 시 UserProvider의 fetchGroups 호출
       if (mounted) {
         final userProvider = Provider.of<UserProvider>(context, listen: false);

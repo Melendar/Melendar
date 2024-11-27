@@ -405,7 +405,10 @@ class _AddMemberScreenState extends State<AddMemberScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('멤버 추가')),
+      appBar: AppBar(
+        backgroundColor: Colors.white, // 상단바 색상을 흰색으로 설정
+        title: Text('멤버 추가')),
+      backgroundColor: Colors.white, // 배경을 흰색으로 설정
       body: Padding(
         padding: EdgeInsets.all(16.0),
         child: Column(

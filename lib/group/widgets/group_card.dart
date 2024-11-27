@@ -25,6 +25,7 @@ class GroupCard extends StatelessWidget {
         side: BorderSide(color: groupColor, width: 1),
       ),
       margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      color: Colors.white, // 카드 배경을 흰색으로 설정
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

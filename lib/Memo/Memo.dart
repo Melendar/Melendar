@@ -171,9 +171,11 @@ class _MemoState extends State<Memo> {
 
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.white, // 상단바 색상을 흰색으로 설정
         title: _isSearching ? _buildSearchField() : const Text('메모'),
         actions: _buildActions(),
       ),
+      backgroundColor: Colors.white, // 배경을 흰색으로 설정
       body: FutureBuilder<List<Map<String, dynamic>>>(
         future: fetchMemosByUserId(_userId!),
         builder: (context, snapshot) {

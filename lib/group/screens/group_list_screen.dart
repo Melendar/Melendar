@@ -40,6 +40,7 @@ class _GroupListScreenState extends State<GroupListScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.white, // 상단바 색상을 흰색으로 설정
         title: Text('그룹'),
         actions: [
           IconButton(
@@ -69,6 +70,7 @@ class _GroupListScreenState extends State<GroupListScreen> {
           ),
         ],
       ),
+      backgroundColor: Colors.white, // 배경을 흰색으로 설정
       body: Consumer<UserProvider>(
         builder: (context, userProvider, child) {
           final groups = userProvider.groups

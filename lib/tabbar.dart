@@ -30,6 +30,7 @@ class _HomePageState extends State<HomePage> {
     final userProvider = Provider.of<UserProvider>(context);
 
     return Scaffold(
+      backgroundColor: Colors.white, // 배경을 흰색으로 설정
       body: _pages[_selectedIndex], // 선택된 페이지 표시
       bottomNavigationBar: SalomonBottomBar(
         currentIndex: _selectedIndex,

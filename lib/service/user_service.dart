@@ -240,12 +240,6 @@ Future<void> updateProfileImage(Function callback) async {
       return;
     }
 
-    if (fileBytes == null) {
-      print("파일 바이트가 여전히 null입니다. 업로드를 중단합니다.");
-      callback('');
-      return;
-    }
-
     print("이미지 선택 완료: $fileName");
 
     // 3. Firebase Storage 참조 생성

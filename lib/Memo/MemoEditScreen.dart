@@ -95,6 +95,7 @@ class _MemoEditScreenState extends State<MemoEditScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.white, // 상단바 색상을 흰색으로 설정
         title: const Text('메모'),
         actions: [
           TextButton(
@@ -110,6 +111,7 @@ class _MemoEditScreenState extends State<MemoEditScreen> {
           ),
         ],
       ),
+      backgroundColor: Colors.white, // 배경을 흰색으로 설정
       body: Container(
         margin: const EdgeInsets.symmetric(horizontal: 13.0, vertical: 15.0), // 외부 여백 추가
         padding: const EdgeInsets.all(10.0), // 박스 내부 여백
