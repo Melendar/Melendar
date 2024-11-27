@@ -74,10 +74,11 @@ class _GroupListScreenState extends State<GroupListScreen> {
           final groups = userProvider.groups
               .map((groupData) => Group(
                     id: groupData['group_id'],
-                    name: groupData['group_name'],
+                    name: groupData['group_name'].trim(), // 개인그룹 하고 공백 뒤에 하나 있는듯...
                     description: groupData['group_description'],
                     members: List<String>.from(groupData['members']),
                   ))
+              .where((group) => group.name != "개인그룹") // "개인그룹" 제외
               .toList();
 
           return groups.isEmpty

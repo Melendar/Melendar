@@ -62,16 +62,9 @@ Widget build(BuildContext context) {
   return CalendarControllerProvider(
     controller: _eventController,
     child: Scaffold(
-      drawer: _buildGroupFilterDrawer(),
+      endDrawer: _buildGroupFilterDrawer(),
       appBar: AppBar(
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: Icon(Icons.menu),
-            onPressed: () {
-              Scaffold.of(context).openDrawer();
-            },
-          ),
-        ),
+        title: Text("캘린더"),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh),
@@ -88,6 +81,14 @@ Widget build(BuildContext context) {
                 );
               },
             ),
+            Builder(
+            builder: (context) => IconButton(
+              icon: Icon(Icons.menu),
+              onPressed: () {
+                Scaffold.of(context).openEndDrawer(); // endDrawer 열기
+              },
+            ),
+          ),
           ],
         ),
         body: _isLoading
