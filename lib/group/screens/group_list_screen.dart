@@ -164,7 +164,10 @@ class GroupSearchDelegate extends SearchDelegate {
 
   @override
   Widget buildResults(BuildContext context) {
-    return buildSuggestions(context);
+    return Scaffold(
+      backgroundColor: Colors.white, // 검색 결과 화면 배경 흰색으로 설정
+      body: buildSuggestions(context),
+    );
   }
 
   @override
@@ -181,51 +184,40 @@ class GroupSearchDelegate extends SearchDelegate {
              members.any((nickname) => nickname.contains(query.toLowerCase()));
     }).toList();
 
-    return filteredGroups.isEmpty
-        ? Center(child: Text('검색 결과가 없습니다.'))
-        : ListView.builder(
-            itemCount: filteredGroups.length,
-            itemBuilder: (context, index) {
-              final group = Group(
-                id: filteredGroups[index]['group_id'],
-                name: filteredGroups[index]['group_name'],
-                description: filteredGroups[index]['group_description'],
-                members: List<String>.from(filteredGroups[index]['members']),
-              );
-              
-              return GestureDetector(
-                onTap: () async {
-                  final result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => GroupDetailScreen(
-                        group: group,
-                        userId: userId ?? '',
-                        getUserProfile: getUserProfile,
+    return Scaffold(
+      backgroundColor: Colors.white, // 검색 제안 화면 배경 흰색으로 설정
+      body: filteredGroups.isEmpty
+          ? Center(child: Text('검색 결과가 없습니다.'))
+          : ListView.builder(
+              itemCount: filteredGroups.length,
+              itemBuilder: (context, index) {
+                final group = Group(
+                  id: filteredGroups[index]['group_id'],
+                  name: filteredGroups[index]['group_name'],
+                  description: filteredGroups[index]['group_description'],
+                  members: List<String>.from(filteredGroups[index]['members']),
+                );
+                return GestureDetector(
+                  onTap: () async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => GroupDetailScreen(
+                          group: group,
+                          userId: userId ?? '',
+                          getUserProfile: getUserProfile,
+                        ),
                       ),
-                    ),
-                  );
-                  
-                  if (result != null && result is List<Map<String, dynamic>>) {
-                    // 삭제된 그룹의 색상도 제거
-                    final newGroupIds = result.map((g) => g['group_id'] as String).toSet();
-                    final oldGroupIds = groups.map((g) => g['group_id'] as String).toSet();
-                    final removedGroupIds = oldGroupIds.difference(newGroupIds);
-                    
-                    for (String groupId in removedGroupIds) {
-                      userProvider.removeGroupColor(groupId);
-                    }
-                    
-                    Provider.of<UserProvider>(context, listen: false).updateGroups(result);
-                  }
-                  close(context, result);
-                },
-                child: GroupCard(
-                  group: group,
-                  getUserProfile: getUserProfile,
-                ),
-              );
-            },
-          );
+                    );
+                    close(context, result);
+                  },
+                  child: GroupCard(
+                    group: group,
+                    getUserProfile: getUserProfile,
+                  ),
+                );
+              },
+            ),
+    );
   }
 }

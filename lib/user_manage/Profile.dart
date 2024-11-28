@@ -22,11 +22,13 @@ class Profile extends State<RegistProfile> {
 
   @override
   void initState() {
-    super.initState();@override
+    super.initState();
+    @override
     void initState() {
       super.initState();
       _initializeUser();
     }
+
     _initializeUser();
   }
 
@@ -96,9 +98,6 @@ class Profile extends State<RegistProfile> {
 
   void _copyUserIdToClipboard(String userId) {
     Clipboard.setData(ClipboardData(text: userId));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("유저 ID가 클립보드에 복사되었습니다.")),
-    );
   }
 
   @override
@@ -170,11 +169,15 @@ class Profile extends State<RegistProfile> {
                                 context: context,
                                 builder: (BuildContext context) {
                                   return AlertDialog(
+                                    backgroundColor:
+                                        Colors.white, // 다이얼로그 배경을 흰색으로 설정
                                     title: const Text("닉네임 변경"),
                                     content: TextField(
                                       decoration: const InputDecoration(
-                                          hintText: "새 닉네임을 입력하세요"),
-                                      onChanged: (value) => _newNickname = value,
+                                        hintText: "새 닉네임을 입력하세요",
+                                      ),
+                                      onChanged: (value) =>
+                                          _newNickname = value,
                                     ),
                                     actions: [
                                       TextButton(

@@ -58,22 +58,22 @@ class _CalendarState extends State<Calendar> {
     }
   }
 
-@override
-Widget build(BuildContext context) {
-  return CalendarControllerProvider(
-    controller: _eventController,
-    child: Scaffold(
-      endDrawer: _buildGroupFilterDrawer(),
-      appBar: AppBar(
-        backgroundColor: Colors.white, // 상단바 색상을 흰색으로 설정
-        title: Text("캘린더"),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.refresh),
-            onPressed: () {
-              _loadEvents();
-            },
-          ),
+  @override
+  Widget build(BuildContext context) {
+    return CalendarControllerProvider(
+      controller: _eventController,
+      child: Scaffold(
+        endDrawer: _buildGroupFilterDrawer(),
+        appBar: AppBar(
+          backgroundColor: Colors.white, // 상단바 색상을 흰색으로 설정
+          title: Text("캘린더"),
+          actions: [
+            IconButton(
+              icon: Icon(Icons.refresh),
+              onPressed: () {
+                _loadEvents();
+              },
+            ),
             IconButton(
               icon: Icon(Icons.search),
               onPressed: () {
@@ -84,13 +84,13 @@ Widget build(BuildContext context) {
               },
             ),
             Builder(
-            builder: (context) => IconButton(
-              icon: Icon(Icons.menu),
-              onPressed: () {
-                Scaffold.of(context).openEndDrawer(); // endDrawer 열기
-              },
+              builder: (context) => IconButton(
+                icon: Icon(Icons.menu),
+                onPressed: () {
+                  Scaffold.of(context).openEndDrawer(); // endDrawer 열기
+                },
+              ),
             ),
-          ),
           ],
         ),
         body: _isLoading
@@ -200,6 +200,7 @@ Widget build(BuildContext context) {
                   DropdownButton<String>(
                     value: selectedGroupId,
                     hint: Text('그룹 선택'),
+                    dropdownColor: Colors.white, // 드롭다운 전체 배경색 설정
                     onChanged: (String? newValue) {
                       setState(() {
                         selectedGroupId = newValue;
@@ -208,7 +209,10 @@ Widget build(BuildContext context) {
                     items: groups.map<DropdownMenuItem<String>>((group) {
                       return DropdownMenuItem<String>(
                         value: group['group_id'],
-                        child: Text(group['group_name']),
+                        child: Text(
+                          group['group_name'],
+                          style: TextStyle(color: Colors.black), // 텍스트 색상 조정
+                        ),
                       );
                     }).toList(),
                   ),
@@ -260,6 +264,7 @@ Widget build(BuildContext context) {
                 ),
               ),
               ListTile(
+                tileColor: Colors.white, // ListTile 배경색 흰색으로 설정
                 title: Text('전체 선택'),
                 trailing: IconButton(
                   icon: Icon(Icons.select_all),
@@ -271,30 +276,33 @@ Widget build(BuildContext context) {
                 ),
               ),
               Expanded(
-                child: ListView.builder(
-                  itemCount: userProvider.groups.length,
-                  itemBuilder: (context, index) {
-                    final group = userProvider.groups[index];
-                    final groupId = group['group_id'] as String;
-                    return ListTile(
-                      leading: Container(
-                        width: 24,
-                        height: 24,
-                        decoration: BoxDecoration(
-                          color: userProvider.getGroupColor(groupId),
-                          shape: BoxShape.circle,
+                child: Container(
+                  color: Colors.white, // 하단 리스트의 배경을 흰색으로 설정
+                  child: ListView.builder(
+                    itemCount: userProvider.groups.length,
+                    itemBuilder: (context, index) {
+                      final group = userProvider.groups[index];
+                      final groupId = group['group_id'] as String;
+                      return ListTile(
+                        leading: Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: userProvider.getGroupColor(groupId),
+                            shape: BoxShape.circle,
+                          ),
                         ),
-                      ),
-                      title: Text(group['group_name']),
-                      trailing: Checkbox(
-                        value: userProvider.isGroupSelected(groupId),
-                        onChanged: (bool? value) {
-                          userProvider.toggleGroupSelection(groupId);
-                          _loadEvents();
-                        },
-                      ),
-                    );
-                  },
+                        title: Text(group['group_name']),
+                        trailing: Checkbox(
+                          value: userProvider.isGroupSelected(groupId),
+                          onChanged: (bool? value) {
+                            userProvider.toggleGroupSelection(groupId);
+                            _loadEvents();
+                          },
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
             ],
@@ -478,12 +486,18 @@ class _EventSearchDelegate extends SearchDelegate {
 
   @override
   Widget buildResults(BuildContext context) {
-    return _buildSearchResults();
+    return Scaffold(
+      backgroundColor: Colors.white, // 배경색을 흰색으로 설정
+      body: _buildSearchResults(),
+    );
   }
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    return _buildSearchResults();
+    return Scaffold(
+      backgroundColor: Colors.white, // 배경색을 흰색으로 설정
+      body: _buildSearchResults(),
+    );
   }
 
   Widget _buildSearchResults() {
@@ -507,7 +521,7 @@ class _EventSearchDelegate extends SearchDelegate {
           title: Text(event.title),
           subtitle: Text(DateFormat('yyyy-MM-dd').format(event.date)),
           onTap: () {
-            // 검색 결과 누르면 뭐 할건지. 아무것도 안 해도 되긴 함 나중에 생각
+            // 검색 결과를 눌렀을 때 동작 정의
           },
         );
       },

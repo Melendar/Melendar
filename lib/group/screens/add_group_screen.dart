@@ -29,8 +29,8 @@ class _AddGroupScreenState extends State<AddGroupScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white, // 상단바 색상을 흰색으로 설정
-        title: Text('그룹 추가')),
+          backgroundColor: Colors.white, // 상단바 색상을 흰색으로 설정
+          title: Text('그룹 추가')),
       backgroundColor: Colors.white, // 배경을 흰색으로 설정
       body: Padding(
         padding: EdgeInsets.all(16.0),
@@ -71,6 +71,10 @@ class _AddGroupScreenState extends State<AddGroupScreen> {
               SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _createGroup,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.black, // 버튼 배경색
+                  foregroundColor: Colors.white, // 텍스트 색상
+                ),
                 child: Text('그룹 생성'),
               ),
             ],
