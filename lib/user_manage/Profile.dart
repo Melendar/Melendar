@@ -105,7 +105,9 @@ class Profile extends State<RegistProfile> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('내 정보'),
-        backgroundColor: Colors.white, // 상단바 색상을 흰색으로 설정
+        backgroundColor: Colors.white,
+        centerTitle: false, // 제목을 왼쪽 정렬
+// 상단바 색상을 흰색으로 설정
       ),
       backgroundColor: Colors.white, // 배경을 흰색으로 설정
       body: _user == null

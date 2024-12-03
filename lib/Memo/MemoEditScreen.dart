@@ -96,7 +96,8 @@ class _MemoEditScreenState extends State<MemoEditScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white, // 상단바 색상을 흰색으로 설정
-        title: const Text('메모'),
+        title: const Text('메모 작성'),
+        centerTitle: false, // 제목을 왼쪽 정렬
         actions: [
           TextButton(
             onPressed: _saveMemo,

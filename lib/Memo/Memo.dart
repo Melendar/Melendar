@@ -72,7 +72,7 @@ class _MemoState extends State<Memo> {
     );
   }
 
-  /// AppBar의 액션 변경
+  /// AppBaAppBar의 액션 변경
   List<Widget> _buildActions() {
     if (_isSearching) {
       return [
@@ -174,6 +174,8 @@ class _MemoState extends State<Memo> {
         backgroundColor: Colors.white, // 상단바 색상을 흰색으로 설정
         title: _isSearching ? _buildSearchField() : const Text('메모'),
         actions: _buildActions(),
+        centerTitle: false, // 제목을 왼쪽 정렬
+
       ),
       backgroundColor: Colors.white, // 배경을 흰색으로 설정
       body: FutureBuilder<List<Map<String, dynamic>>>(
