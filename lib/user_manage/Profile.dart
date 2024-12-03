@@ -221,11 +221,19 @@ class Profile extends State<RegistProfile> {
                             onPressed: () {
                               if (_user?.uid != null) {
                                 _copyUserIdToClipboard(_user!.uid);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('복사되었습니다.'),
+                                    duration: Duration(seconds: 1), // 2초 동안 표시
+                                    behavior: SnackBarBehavior.floating, // 화면에 떠 있는 스타일
+                                  ),
+                                );
                               }
                             },
                             icon: const Icon(Icons.copy, size: 18),
                             tooltip: "ID 복사",
                           ),
+
                         ],
                       ),
                     ],

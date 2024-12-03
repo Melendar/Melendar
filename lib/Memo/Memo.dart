@@ -128,19 +128,33 @@ class _MemoState extends State<Memo> {
                 context: context,
                 builder: (BuildContext context) {
                   return AlertDialog(
-                    title: const Text('메모 삭제'),
-                    content: const Text('선택한 메모를 정말 삭제하시겠습니까?'),
+                    backgroundColor: Colors.white, // 배경을 검은색으로 설정
+                    title: const Text(
+                      '메모 삭제',
+                      style: TextStyle(color: Colors.black), // 제목을 흰색으로 설정
+                    ),
+                    content: const Text(
+                      '선택한 메모를 정말 삭제하시겠습니까?',
+                      style: TextStyle(color: Colors.black), // 내용 텍스트를 흰색으로 설정
+                    ),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.of(context).pop(false), // 취소
-                        child: const Text('취소'),
+                        child: const Text(
+                          '취소',
+                          style: TextStyle(color: Colors.black), // 버튼 텍스트를 흰색으로 설정
+                        ),
                       ),
                       TextButton(
                         onPressed: () => Navigator.of(context).pop(true), // 확인
-                        child: const Text('확인'),
+                        child: const Text(
+                          '확인',
+                          style: TextStyle(color: Colors.black), // 버튼 텍스트를 흰색으로 설정
+                        ),
                       ),
                     ],
                   );
+
                 },
               );
 
