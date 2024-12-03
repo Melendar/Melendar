@@ -179,10 +179,12 @@ class GroupSearchDelegate extends SearchDelegate {
           .map((memberId) => userProvider.getMemberNickname(memberId).toLowerCase())
           .toList();
           
-      return name.contains(query.toLowerCase()) ||
-             description.contains(query.toLowerCase()) ||
-             members.any((nickname) => nickname.contains(query.toLowerCase()));
-    }).toList();
+      return name != "개인그룹" && (
+      name.contains(query.toLowerCase()) ||
+      description.contains(query.toLowerCase()) ||
+      members.any((nickname) => nickname.contains(query.toLowerCase()))
+    );
+  }).toList();
 
     return Scaffold(
       backgroundColor: Colors.white, // 검색 제안 화면 배경 흰색으로 설정
