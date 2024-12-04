@@ -13,6 +13,8 @@
 - 구글 계정을 통한 로그인
 - 간편한 인증 시스템 제공
 
+<img src="https://github.com/user-attachments/assets/58433ffa-57ee-41b3-9d63-e8f47b5a30ce" alt="로그인" width="300" style="display: block; margin: auto;">
+
 ---
 
 ### 2. **사용자 정보 화면**
@@ -20,11 +22,15 @@
 - 닉네임 및 프로필 이미지 수정 가능
 - 로그아웃 기능
 
+<img src="https://github.com/user-attachments/assets/c5d6b612-eb6b-44d5-9baa-51a9f468a72d" alt="내 정보" width="300" style="display: block; margin: auto;">
+
 ---
 
 ### 3. **캘린더**
 - 일정 관리: 일정 추가, 삭제, 수정, 검색
 - 특정 그룹의 일정만 확인 가능
+
+<img src="https://github.com/user-attachments/assets/dc9177c0-84d5-455d-a22c-0aaf57a92dbc" alt="캘린더" width="300" style="display: block; margin: auto;">
 
 ---
 
@@ -32,11 +38,15 @@
 - 유저 ID를 통한 그룹원 추가
 - 그룹 추가, 삭제, 검색, 수정
 
+<img src="https://github.com/user-attachments/assets/56242895-b3d3-4f04-ad3e-9c8a9bee357b" alt="그룹" width="300" style="display: block; margin: auto;">
+
 ---
 
 ### 5. **메모 관리**
 - 메모 추가, 삭제, 수정, 검색
 - 개인 메모만 확인 가능
+
+<img src="https://github.com/user-attachments/assets/5e6de989-53c7-40e9-a9c0-741929699489" alt="메모" width="300" style="display: block; margin: auto;">
 
 ---
 
